@@ -1,0 +1,41 @@
+{
+  "name": "web-to-mobile",
+  "version": "0.1.0",
+  "description": "Plan-first workflow for transforming websites and web apps into Expo React Native mobile apps.",
+  "author": {
+    "name": "WebToMobile contributors",
+    "url": "https://github.com/webtomobile/web-to-mobile"
+  },
+  "homepage": "https://github.com/webtomobile/web-to-mobile",
+  "repository": "https://github.com/webtomobile/web-to-mobile",
+  "license": "MIT",
+  "keywords": [
+    "web-to-mobile",
+    "expo",
+    "react-native",
+    "migration",
+    "skills",
+    "mobile-apps"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "WebToMobile",
+    "shortDescription": "Turn web apps into mobile apps with an audit, plan, checklist, implementation, and tests",
+    "longDescription": "Use WebToMobile to inspect an existing website or web app, create a Markdown migration plan, map web routes to mobile navigation, implement an Expo React Native app from an approved checklist, and verify the result.",
+    "developerName": "WebToMobile contributors",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use WebToMobile on the current workspace.",
+      "Use WebToMobile on https://github.com/user/repo."
+    ],
+    "websiteURL": "https://github.com/webtomobile/web-to-mobile",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#0EA5E9"
+  }
+}

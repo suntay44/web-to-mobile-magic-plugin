@@ -1,0 +1,10 @@
+.DS_Store
+node_modules/
+.env
+.env.*
+dist/
+build/
+.expo/
+.turbo/
+.cache/
+.claude/settings.local.json
