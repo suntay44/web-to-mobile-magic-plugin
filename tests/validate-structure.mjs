@@ -36,6 +36,7 @@ const requiredFiles = [
   "commands/mobile-review.md",
   "scripts/web-repo-audit.mjs",
   "scripts/mobile-app-audit.mjs",
+  "scripts/install.mjs",
   "tests/fixtures/react-web/package.json",
   "tests/fixtures/react-web/src/App.tsx",
   "tests/fixtures/react-web/tailwind.config.js",
@@ -100,6 +101,29 @@ assert(codex.interface?.displayName === "WebToMobile", "Codex manifest must incl
 assert(Array.isArray(codex.interface?.defaultPrompt), "Codex manifest must include default prompts");
 assert(claude.commands === "./commands/", "Claude manifest must expose commands");
 assert(cursor.commands === "./commands/", "Cursor manifest must expose commands");
+
+const commandSkillMap = {
+  "commands/web-to-mobile.md": "web-to-mobile",
+  "commands/mobile-resume.md": "mobile-resume",
+  "commands/mobile-scan.md": "mobile-qa-scan",
+  "commands/mobile-review.md": "mobile-deep-review",
+  "commands/mobile-audit.md": "mobile-app-audit",
+  "commands/mobile-qa.md": "mobile-qa-release",
+};
+
+for (const [commandFile, skillName] of Object.entries(commandSkillMap)) {
+  const body = read(commandFile);
+  assert(
+    body.includes(`\`${skillName}\``),
+    `${commandFile} must reference skill \`${skillName}\``
+  );
+  assert(
+    body.includes("SKILL.md"),
+    `${commandFile} must include a fallback path to SKILL.md`
+  );
+  const words = body.trim().split(/\s+/).filter(Boolean).length;
+  assert(words <= 80, `${commandFile} is too long: ${words} words (max 80)`);
+}
 
 const command = read("commands/web-to-mobile.md");
 assert(command.includes("Invoke the `web-to-mobile` skill"), "Command must invoke the orchestrator skill");

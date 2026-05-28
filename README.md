@@ -96,27 +96,55 @@ The audit script summarizes a repo as structured JSON so the agent never blindly
 
 ## Install
 
-### Claude Code
+### Claude Code — CLI and Desktop App
 
-Add to your project or global Claude Code plugins:
+**Global install** (commands available in every project):
 
+```bash
+node scripts/install.mjs
 ```
-.claude-plugin/plugin.json
+
+Symlinks all commands to `~/.claude/commands/` and all skills to `~/.claude/skills/`. Restart Claude Code after running. To uninstall: `node scripts/install.mjs --unlink`
+
+**Project-level install** (commands available in this project only):
+
+```bash
+mkdir -p .claude/commands .claude/skills
+cp commands/* .claude/commands/
+cp -r skills/* .claude/skills/
 ```
 
-Available commands: `/web-to-mobile`, `/mobile-resume`, `/mobile-scan`, `/mobile-review`, `/mobile-audit`, `/mobile-qa`
+Once installed, these slash commands are available in both the CLI and Desktop App:
+
+| Command | Trigger |
+|---------|---------|
+| `/web-to-mobile` | Type in chat |
+| `/mobile-resume` | Type in chat |
+| `/mobile-scan` | Type in chat |
+| `/mobile-review` | Type in chat |
+| `/mobile-audit` | Type in chat |
+| `/mobile-qa` | Type in chat |
+
+Each command works with or without the Skill tool. If the Skill tool is unavailable, the command reads its matching skill file directly from `skills/` or `~/.claude/skills/`.
 
 ### Cursor
 
-```
-.cursor-plugin/plugin.json
-```
+Cursor does not yet have a native slash command system equivalent to Claude Code's. To use these commands in Cursor:
+
+1. Copy `commands/*.md` into `.cursor/rules/` in your project — Cursor loads them as AI context rules.
+2. The `skills/` directory should be in your workspace so the AI can read skill files when referenced.
+
+The `.cursor-plugin/plugin.json` manifest is ready for when Cursor's plugin API adds slash command support.
 
 ### Codex
+
+Add this repo as a Codex plugin using the manifest:
 
 ```
 .codex-plugin/plugin.json
 ```
+
+Commands are exposed via the `interface.defaultPrompt` array in the manifest. The `$web-to-mobile` and `$mobile-resume` invocation style works in Codex surfaces.
 
 ---
 

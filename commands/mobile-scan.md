@@ -1,5 +1,7 @@
 ---
-description: QA scan of an existing mobile app. Runs lint, typecheck, tests, and build checks to produce a structured pass/fail QA report. No source file reads unless a command fails.
+description: Quick QA scan of an existing mobile app. Runs lint, typecheck, tests, and build checks. Produces a structured pass/fail report. No deep source reads.
 ---
 
 Invoke the `mobile-qa-scan` skill with any arguments provided.
+
+If the Skill tool is unavailable, read and follow `skills/mobile-qa-scan/SKILL.md` directly (global install: `~/.claude/skills/mobile-qa-scan/SKILL.md`).
