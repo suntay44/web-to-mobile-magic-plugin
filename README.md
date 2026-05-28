@@ -1,0 +1,186 @@
+<div align="center">
+
+<br />
+
+# WEBSITES TO MOBILE
+
+### AI Skills & Plugin for Coding Agents
+
+**Convert any website into a mobile app. Audit, complete, scan, and review existing ones.**<br />
+Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
+
+<br />
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Works with Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://claude.ai/code)
+[![Works with Cursor](https://img.shields.io/badge/Cursor-Plugin-black)](https://cursor.sh)
+[![Expo React Native](https://img.shields.io/badge/Target-Expo%20React%20Native-4630EB)](https://expo.dev)
+
+<br />
+
+</div>
+
+---
+
+## What It Does
+
+WebToMobile gives any AI coding agent four commands that cover the full lifecycle of mobile app development — from a website URL to a production-ready Expo React Native app.
+
+Each command audits first, plans before building, and gates on your approval before writing a single line of code.
+
+---
+
+## Commands
+
+| Command | Scenario | What it does |
+|---------|----------|--------------|
+| `/web-to-mobile` | **Start from scratch** | Convert a website, GitHub repo, or local web project into an Expo React Native app |
+| `/mobile-resume` | **Finish what's started** | Audit an unfinished mobile app, plan what's left, and implement the remaining work |
+| `/mobile-scan` | **QA report** | Run lint, typecheck, tests, and build checks — produce a structured pass/fail report |
+| `/mobile-review` | **Deep senior review** | Read key source files and analyze architecture, code quality, robustness, performance, and security |
+
+---
+
+## The 4 Scenarios
+
+### 1 — No mobile app yet
+```
+/web-to-mobile https://yourwebsite.com
+/web-to-mobile https://github.com/you/your-web-app
+/web-to-mobile ./local-web-project
+```
+Audit → Migration plan → *(your approval)* → Build → Parity check → QA
+
+### 2 — Started but not done, wants to finish it
+```
+/mobile-resume ./my-unfinished-app
+/mobile-resume https://github.com/you/unfinished-app
+```
+Audit → Completion plan → *(your approval)* → Build remaining → QA
+
+### 3 — Wants a QA report (surface-level check)
+```
+/mobile-scan ./my-app
+```
+Runs commands only — no deep source reads. Produces a **Shippable / Needs Work / Blocked** verdict with a structured report covering build health, test coverage, structure, and risks.
+
+### 4 — Wants a senior developer + QA deep review
+```
+/mobile-review ./my-app
+```
+Reads up to 10 targeted files identified from the audit. Produces severity-tagged findings (Critical / High / Medium / Low) across architecture, code quality, robustness, performance, and security — with a prioritized action list.
+
+> **Difference between 3 and 4:** `/mobile-scan` is command-driven (cheap, fast). `/mobile-review` is code-driven (targeted, deep). Both start from the same audit script output to stay token-efficient.
+
+---
+
+## How It Works
+
+Every command follows the same principle: **audit script first, targeted reads only, plan before code.**
+
+```
+Audit script → JSON summary (framework, screens, deps, risks)
+     ↓
+Commands or targeted file reads (depending on the command)
+     ↓
+Markdown plan or report written to docs/
+     ↓
+Approval gate (build commands only — scan and review skip this)
+     ↓
+Implementation or report delivered
+```
+
+The audit script summarizes a repo as structured JSON so the agent never blindly reads the entire codebase. Each skill loads one phase at a time. The Markdown plan acts as external memory between phases so context stays lean.
+
+---
+
+## Install
+
+### Claude Code
+
+Add to your project or global Claude Code plugins:
+
+```
+.claude-plugin/plugin.json
+```
+
+Available commands: `/web-to-mobile`, `/mobile-resume`, `/mobile-scan`, `/mobile-review`, `/mobile-audit`, `/mobile-qa`
+
+### Cursor
+
+```
+.cursor-plugin/plugin.json
+```
+
+### Codex
+
+```
+.codex-plugin/plugin.json
+```
+
+---
+
+## Stack
+
+| Default | Alternate |
+|---------|-----------|
+| Expo React Native | Swift / SwiftUI (iOS-only, on request) |
+
+---
+
+## Repository Layout
+
+```
+web-to-mobile/
+├── commands/
+│   ├── web-to-mobile.md       # /web-to-mobile
+│   ├── mobile-resume.md       # /mobile-resume
+│   ├── mobile-scan.md         # /mobile-scan
+│   ├── mobile-review.md       # /mobile-review
+│   ├── mobile-audit.md        # /mobile-audit (standalone)
+│   └── mobile-qa.md           # /mobile-qa (standalone)
+├── skills/
+│   ├── web-to-mobile/         # Orchestrator: web → mobile
+│   ├── web-to-mobile-audit/   # Inspect web source
+│   ├── mobile-migration-plan/ # Route map + checklist + approval
+│   ├── mobile-parity-check/   # Design + functional parity vs. web
+│   ├── mobile-resume/         # Orchestrator: resume unfinished app
+│   ├── mobile-app-audit/      # Inspect existing mobile app
+│   ├── mobile-completion-plan/# Completion status + checklist + approval
+│   ├── mobile-qa-scan/        # QA report (command-driven)
+│   ├── mobile-deep-review/    # Senior review (code-driven)
+│   ├── expo-react-native-build/# Build from approved checklist
+│   └── mobile-qa-release/     # Verify: perf, a11y, layout, release
+├── scripts/
+│   ├── web-repo-audit.mjs     # Summarizes a web project as JSON
+│   └── mobile-app-audit.mjs   # Summarizes a mobile app as JSON
+├── examples/
+│   ├── sample-web-to-mobile-plan.md
+│   └── sample-mobile-completion-plan.md
+├── tests/
+│   ├── fixtures/react-web/
+│   ├── fixtures/partial-expo-app/
+│   ├── pressure-scenarios.md
+│   └── validate-structure.mjs
+├── .claude-plugin/plugin.json
+├── .cursor-plugin/plugin.json
+├── .codex-plugin/plugin.json
+└── LICENSE
+```
+
+---
+
+## Validate
+
+```bash
+node tests/validate-structure.mjs
+```
+
+Checks manifests, command wiring, skill frontmatter, token-size limits, required workflow gates, audit script correctness against fixtures, and pressure-test scenario coverage.
+
+---
+
+## License
+
+MIT © [Next Level Builder](LICENSE)
+# web-to-mobile-magic-plugin
