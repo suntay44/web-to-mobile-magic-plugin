@@ -5,6 +5,13 @@ import { join, relative, extname } from "node:path";
 const root = process.argv[2] || ".";
 const maxFiles = Number(process.env.WEBTOMOBILE_MAX_FILES || 120);
 const routeRoots = ["app", "pages", "src/app", "src/pages", "routes", "src/routes", "app/routes"];
+const apiRouteRoots = ["app/api", "src/app/api", "pages/api", "src/pages/api"];
+const serverPatterns = [
+  ["server-actions", /["']use server["']/g],
+  ["getServerSideProps", /\bgetServerSideProps\b/g],
+  ["getStaticProps", /\bgetStaticProps\b/g],
+  ["trpc-router", /createTRPCRouter|initTRPC/g],
+];
 const sourceExts = new Set([".ts", ".tsx", ".js", ".jsx", ".vue", ".svelte", ".astro", ".html"]);
 const ignoreDirs = new Set([".git", "node_modules", ".next", "dist", "build", ".expo", ".turbo", "coverage"]);
 const browserPatterns = [
@@ -197,6 +204,40 @@ const routeConfidence = routeCount > 0
     ? "not-detected-check-router-config"
     : "no-source-files-detected";
 
+// Backend coupling: a mobile app needs a client-callable API. Detect whether the
+// web app is server-coupled (SSR/server actions/internal API routes) vs a SPA hitting
+// an external API. Server-coupled apps have no portable API — that is a human blocker.
+const internalApiRoutes = [];
+for (const apiRoot of apiRouteRoots) {
+  const absolute = join(root, apiRoot);
+  if (!existsSync(absolute)) continue;
+  for (const file of walk(absolute, [])) {
+    if (internalApiRoutes.length < 40) internalApiRoutes.push(relative(root, file));
+  }
+}
+
+const serverSignals = [];
+for (const file of sourceFiles) {
+  let text = "";
+  try {
+    text = readFileSync(file, "utf8");
+  } catch {
+    continue;
+  }
+  for (const [name, pattern] of serverPatterns) {
+    if (!serverSignals.includes(name) && pattern.test(text)) serverSignals.push(name);
+  }
+}
+
+const serverCoupled =
+  internalApiRoutes.length > 0 ||
+  serverSignals.some((s) => ["server-actions", "getServerSideProps", "trpc-router"].includes(s));
+const renderingModel = serverCoupled
+  ? "server-coupled"
+  : dependencyMatches.api.length > 0
+    ? "client-spa-external-api"
+    : "unknown";
+
 const mobileRisks = [];
 const browserApiUsage = sampleBrowserApiUsage(sourceFiles);
 if (Object.keys(browserApiUsage).length) mobileRisks.push("browser-only-apis");
@@ -204,6 +245,7 @@ if (dependencyMatches.auth.length) mobileRisks.push("mobile-auth-session-handlin
 if (dependencyMatches.api.length) mobileRisks.push("api-data-layer-port");
 if (dependencyMatches.styling.includes("tailwindcss")) mobileRisks.push("web-styling-port");
 if (dependencyMatches.ui.length) mobileRisks.push("dom-ui-component-rewrite");
+if (renderingModel === "server-coupled") mobileRisks.push("backend-not-portable-needs-api");
 
 console.log(JSON.stringify({
   root,
@@ -215,6 +257,9 @@ console.log(JSON.stringify({
   sourceFilesScanned: sourceFiles.length,
   routes,
   routeConfidence,
+  renderingModel,
+  internalApiRoutes,
+  serverSignals,
   browserApiUsage,
   mobileRisks,
   interestingFiles
