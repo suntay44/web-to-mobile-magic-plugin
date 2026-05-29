@@ -58,6 +58,7 @@ const requiredFiles = [
   "skills/mobile-migration-plan/references/plan-template.md",
   "examples/sample-web-to-mobile-plan.md",
   "examples/sample-mobile-completion-plan.md",
+  "references/output-contracts.md",
   "tests/pressure-scenarios.md"
 ];
 
@@ -127,6 +128,16 @@ for (const [commandFile, skillName] of Object.entries(commandSkillMap)) {
 
 const command = read("commands/web-to-mobile.md");
 assert(command.includes("Invoke the `web-to-mobile` skill"), "Command must invoke the orchestrator skill");
+
+const readme = read("README.md");
+assert(readme.includes("six commands"), "README must describe the current six-command surface");
+assert(readme.includes("--refresh"), "README must document safe installer refresh behavior");
+assert(!readme.includes("$web-to-mobile and $mobile-resume invocation style works"), "README must avoid overpromising Codex invocation syntax");
+
+const installer = read("scripts/install.mjs");
+assert(installer.includes("--refresh"), "Installer must support --refresh");
+assert(installer.includes("isOwnedSymlink"), "Installer refresh/unlink must guard user-owned files");
+assert(!installer.includes("--force"), "Installer must not expose a broad --force mode");
 
 const auditScript = read("scripts/web-repo-audit.mjs");
 for (const phrase of [
@@ -237,6 +248,7 @@ assert(mobileAudit.dependencyMatches.navigation.includes("@react-navigation/nati
 assert(mobileAudit.screens.some((s) => s.status === "partial"), "Mobile fixture audit must detect partial screens");
 assert(mobileAudit.incompleteMarkers.todo?.length > 0, "Mobile fixture audit must detect TODO markers");
 assert(mobileAudit.completionRisks.includes("partial-screens"), "Mobile fixture audit must flag partial-screens risk");
+assert(typeof mobileAudit.brokenScreenCount === "number", "Mobile fixture audit must include brokenScreenCount field");
 
 const paritySkillChecks = {
   "skills/mobile-parity-check/SKILL.md": [

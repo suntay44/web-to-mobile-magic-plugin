@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, extname } from "node:path";
+import { join, relative, extname, basename } from "node:path";
 
 const root = process.argv[2] || ".";
 const maxFiles = Number(process.env.MOBILEAUDIT_MAX_FILES || 150);
@@ -86,12 +86,21 @@ function scanIncompleteMarkers(files) {
   return found;
 }
 
-function detectScreens(files) {
+// Expo Router uses file-based routing — _layout files define structure, not screens.
+// Group directories like (auth) or (tabs) are transparent routing segments, not screen names.
+function isLayoutFile(filename) {
+  return /^_layout\.(tsx?|jsx?)$/.test(filename);
+}
+
+function detectScreens(files, isExpoRouter) {
   const screens = [];
   for (const screenRoot of screenRoots) {
     const absolute = join(root, screenRoot);
     if (!existsSync(absolute)) continue;
     for (const file of walk(absolute, [])) {
+      const name = basename(file);
+      // Skip Expo Router layout files — they define navigators, not screens
+      if (isExpoRouter && isLayoutFile(name)) continue;
       const rel = relative(root, file);
       let text = "";
       try {
@@ -102,7 +111,11 @@ function detectScreens(files) {
       const hasTodo = /\bTODO\b|\bFIXME\b/i.test(text);
       const hasPlaceholder = /\bplaceholder\b/i.test(text);
       const hasEmptyReturn = /return\s+null\s*;/.test(text);
-      const status = hasTodo || hasPlaceholder || hasEmptyReturn ? "partial" : "implemented";
+      const hasTsIgnore = /@ts-ignore/.test(text);
+      // broken = suppressed type errors combined with empty return (actively silenced breakage)
+      const isBroken = hasTsIgnore && hasEmptyReturn;
+      const isPartial = !isBroken && (hasTodo || hasPlaceholder || hasEmptyReturn);
+      const status = isBroken ? "broken" : isPartial ? "partial" : "implemented";
       if (screens.length < 60) {
         screens.push({ file: rel, status });
       }
@@ -137,9 +150,12 @@ const allDeps = {
   ...(packageJson?.devDependencies || {}),
 };
 
+const isExpoRouter = Boolean(allDeps["expo-router"]);
+
 const frameworks = [];
 if (allDeps["expo"]) frameworks.push(`Expo ${allDeps["expo"]}`);
 if (allDeps["react-native"]) frameworks.push(`React Native ${allDeps["react-native"]}`);
+if (isExpoRouter) frameworks.push("Expo Router (file-based routing)");
 if (!allDeps["expo"] && !allDeps["react-native"] && existsSync(join(root, "ios"))) {
   frameworks.push("Swift/iOS (detected via ios/ directory)");
 }
@@ -153,7 +169,7 @@ const dependencyMatches = {
 };
 
 const sourceFiles = walk(root, []);
-const screens = detectScreens(sourceFiles);
+const screens = detectScreens(sourceFiles, isExpoRouter);
 const incompleteMarkers = scanIncompleteMarkers(sourceFiles);
 const testFiles = detectTestFiles(sourceFiles);
 
@@ -174,8 +190,10 @@ const configFiles = {
 };
 
 const partialScreens = screens.filter((s) => s.status === "partial");
+const brokenScreens = screens.filter((s) => s.status === "broken");
 const completionRisks = [];
 if (partialScreens.length > 0) completionRisks.push("partial-screens");
+if (brokenScreens.length > 0) completionRisks.push("broken-screens");
 if (Object.keys(incompleteMarkers).length > 0) completionRisks.push("incomplete-markers-in-source");
 if (!configFiles.easJson) completionRisks.push("missing-eas-config");
 if (testFiles.length === 0) completionRisks.push("no-tests-detected");
@@ -194,6 +212,7 @@ console.log(
       sourceFilesScanned: sourceFiles.length,
       screens,
       partialScreenCount: partialScreens.length,
+      brokenScreenCount: brokenScreens.length,
       incompleteMarkers,
       testFiles,
       testCount: testFiles.length,

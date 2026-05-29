@@ -28,12 +28,26 @@ node scripts/mobile-app-audit.mjs <target-path>
 
 The JSON covers screens, navigators, incomplete markers, missing config, and test coverage — do not re-read those files unless the JSON value is ambiguous.
 
+## Completion States
+
+The audit script reports three screen states:
+
+- **implemented** — renders real data with no stubs or suppressed errors.
+- **partial** — has TODO, FIXME, placeholder text, or `return null` without `@ts-ignore`.
+- **broken** — has `@ts-ignore` combined with `return null` (type errors suppressed alongside empty render).
+
+Report all three counts. Broken screens are higher priority than partial screens in the completion plan.
+
+## Expo Router Awareness
+
+For apps using `expo-router`, the `app/` directory uses file-based routing. The audit script excludes `_layout.*` files (navigator definitions) from the screen list. Group directories like `(auth)` or `(tabs)` are transparent routing segments — their children are the actual screens.
+
 ## What To Identify
 
 - Framework: Expo SDK version, React Native version, or Swift/SwiftUI.
 - Package manager and scripts: start, build, test, lint, typecheck, eas build.
 - Navigation structure: stacks, tabs, drawers, file-based routing, and screen inventory.
-- Screen completion status: fully implemented, partial (TODO/placeholder/empty return), or missing.
+- Screen completion status: implemented, partial, or broken (see Completion States above).
 - API integration: implemented calls, stubbed or mocked endpoints, missing integrations.
 - Auth flow: implemented, partial, or missing. Session handling and secure storage status.
 - State management: complete, partial, or missing.

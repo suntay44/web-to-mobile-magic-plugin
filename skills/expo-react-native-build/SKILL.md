@@ -10,12 +10,26 @@ Implement the approved plan — works for both web-to-mobile migrations and mobi
 
 ## Required Gates
 
-Before editing code, confirm a plan exists under `docs/web-to-mobile/` with an implementation checklist. The user approved implementation is required — if not, return to `mobile-migration-plan`.
+Before editing code, confirm:
+
+1. A plan exists under `docs/web-to-mobile/` (migration) or `docs/mobile-resume/` (completion).
+2. The plan has an Implementation Checklist.
+3. The user approved implementation — if not, return to `mobile-migration-plan` or `mobile-completion-plan`.
+
+## Pre-Build Validation
+
+Before writing any screen or component code, verify:
+
+- `app.json` has `name`, `slug`, and `version` set.
+- Any environment variables referenced in source code have corresponding entries in `.env.example` or are documented in the plan.
+- If the plan targets EAS Build, `eas.json` exists with at least one build profile.
+
+If a required value is missing, add it to the plan's Unknowns/Blockers section and ask the user before continuing.
 
 ## Build Rules
 
 - Re-read the plan before editing.
-- Work through checklist items in order.
+- **Skip `- [x]` items. Implement only `- [ ]` items.**
 - Keep changes scoped to the approved plan.
 - Follow the plan's reusable code, rewrite-required code, mobile-native gaps, and unknowns/blockers sections.
 - Use the source repo's package manager and style.

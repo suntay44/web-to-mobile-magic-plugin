@@ -28,8 +28,8 @@ The plan must include:
 
 - **Source**: repo, framework, SDK version.
 - **Audit Findings**: from the audit phase (may already be written to the file).
-- **Completion Status**: Done / Partial / Missing for each area (screens, nav, API, auth, state, permissions, assets, tests, build config).
-- **Screen Inventory and Status**: each screen listed with its file path and status.
+- **Completion Status**: Done / Partial / Broken / Missing for each area (screens, nav, API, auth, state, permissions, assets, tests, build config). Broken items are higher priority than partial.
+- **Screen Inventory and Status**: each screen listed with its file path and status (implemented / partial / broken).
 - **Implementation Checklist**: Markdown checkboxes with specific file paths and verification commands.
 - **Test Plan**: what to run and what to add.
 - **Build and Release Checklist**: `app.json`, `eas.json`, signing, env vars.
@@ -38,13 +38,13 @@ The plan must include:
 
 The Implementation Checklist must be executable. Example: `- [ ] Complete \`screens/ProfileScreen.tsx\` — replace stub with real data from \`src/api/user.ts\`.`
 
-Avoid vague items like "finish the UI" or "add error handling everywhere".
+Avoid vague items like "finish the UI" or "add error handling everywhere". List broken screens before partial screens in the checklist.
 
 ## Approval Gate
 
 After writing the plan:
 
-1. Summarize what is done, partial, and missing.
+1. Summarize what is done, partial, broken, and missing.
 2. Link or point to the plan file.
 3. Ask the user to approve implementation.
 

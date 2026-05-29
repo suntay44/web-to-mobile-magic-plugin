@@ -6,7 +6,7 @@
 
 ### AI Skills & Plugin for Coding Agents
 
-**Convert any website into a mobile app. Audit, complete, scan, and review existing ones.**<br />
+**Turn websites and web repos into audited mobile migration plans and Expo React Native implementation workflows.**<br />
 Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 
 <br />
@@ -24,9 +24,9 @@ Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 
 ## What It Does
 
-WebToMobile gives any AI coding agent four commands that cover the full lifecycle of mobile app development — from a website URL to a production-ready Expo React Native app.
+WebToMobile gives AI coding agents six commands for web-to-mobile migration, unfinished mobile app completion, QA, and review.
 
-Each command audits first, plans before building, and gates on your approval before writing a single line of code.
+Each build-oriented command audits first, plans before building, and gates on your approval before writing code. Live websites can be audited and planned from public pages, but faithful implementation needs source access.
 
 ---
 
@@ -38,6 +38,8 @@ Each command audits first, plans before building, and gates on your approval bef
 | `/mobile-resume` | **Finish what's started** | Audit an unfinished mobile app, plan what's left, and implement the remaining work |
 | `/mobile-scan` | **QA report** | Run lint, typecheck, tests, and build checks — produce a structured pass/fail report |
 | `/mobile-review` | **Deep senior review** | Read key source files and analyze architecture, code quality, robustness, performance, and security |
+| `/mobile-audit` | **Mobile audit only** | Inspect an existing mobile app and report complete, partial, and missing areas |
+| `/mobile-qa` | **Final verification** | Verify a mobile app against its approved plan before completion |
 
 ---
 
@@ -106,6 +108,14 @@ node scripts/install.mjs
 
 Symlinks all commands to `~/.claude/commands/` and all skills to `~/.claude/skills/`. Restart Claude Code after running. To uninstall: `node scripts/install.mjs --unlink`
 
+To update an existing WebToMobile install:
+
+```bash
+node scripts/install.mjs --refresh
+```
+
+`--refresh` only replaces WebToMobile-owned symlinks. It skips user-owned files with the same names.
+
 **Project-level install** (commands available in this project only):
 
 ```bash
@@ -144,7 +154,7 @@ Add this repo as a Codex plugin using the manifest:
 .codex-plugin/plugin.json
 ```
 
-Commands are exposed via the `interface.defaultPrompt` array in the manifest. The `$web-to-mobile` and `$mobile-resume` invocation style works in Codex surfaces.
+In Codex, install the plugin and ask Codex to use the `web-to-mobile` or `mobile-resume` skill. Some Codex surfaces may expose skill shortcuts or default prompts, but exact invocation depends on the Codex interface.
 
 ---
 
@@ -211,4 +221,3 @@ Checks manifests, command wiring, skill frontmatter, token-size limits, required
 ## License
 
 MIT © [Next Level Builder](LICENSE)
-# web-to-mobile-magic-plugin

@@ -5,12 +5,13 @@
  * so all six slash commands work in Claude Code CLI and Desktop App.
  *
  * Usage:
- *   node scripts/install.mjs          # install
- *   node scripts/install.mjs --unlink # remove symlinks
+ *   node scripts/install.mjs           # install missing commands/skills
+ *   node scripts/install.mjs --refresh # refresh WebToMobile-owned symlinks
+ *   node scripts/install.mjs --unlink  # remove WebToMobile-owned symlinks
  */
-import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, rmSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readlinkSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { symlink, copyFile, cp } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { homedir, platform } from "node:os";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +19,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const home = homedir();
 const isWindows = platform() === "win32";
 const unlink = process.argv.includes("--unlink");
+const refresh = process.argv.includes("--refresh");
 
 const CLAUDE_DIR = join(home, ".claude");
 const COMMANDS_DEST = join(CLAUDE_DIR, "commands");
@@ -31,10 +33,37 @@ function ensureDir(dir) {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 }
 
+function pathExists(path) {
+  try {
+    lstatSync(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function symlinkTarget(dest) {
+  const target = readlinkSync(dest);
+  return isAbsolute(target) ? target : resolve(dirname(dest), target);
+}
+
+function isOwnedSymlink(dest) {
+  if (!pathExists(dest)) return false;
+  const stat = lstatSync(dest);
+  return stat.isSymbolicLink() && symlinkTarget(dest).startsWith(root);
+}
+
 async function linkOrCopy(src, dest, label) {
-  if (existsSync(dest)) {
-    skip(`${label} — already exists`);
-    return;
+  if (pathExists(dest)) {
+    if (refresh && isOwnedSymlink(dest)) {
+      unlinkSync(dest);
+    } else if (refresh) {
+      warn(`${label} — exists but is not a WebToMobile symlink; skipped`);
+      return;
+    } else {
+      skip(`${label} — already exists`);
+      return;
+    }
   }
   try {
     if (isWindows) {
@@ -51,10 +80,13 @@ async function linkOrCopy(src, dest, label) {
 }
 
 function removeLink(dest, label) {
-  if (!existsSync(dest)) { skip(`${label} — not installed`); return; }
+  if (!pathExists(dest)) { skip(`${label} — not installed`); return; }
   try {
-    const s = statSync(dest);
-    s.isDirectory() ? rmSync(dest, { recursive: true }) : unlinkSync(dest);
+    if (!isOwnedSymlink(dest)) {
+      warn(`${label} — exists but is not a WebToMobile symlink; skipped`);
+      return;
+    }
+    unlinkSync(dest);
     ok(`${label} removed`);
   } catch (err) {
     warn(`${label} — ${err.message}`);
@@ -62,7 +94,8 @@ function removeLink(dest, label) {
 }
 
 async function main() {
-  console.log(`\nWebToMobile — ${unlink ? "Uninstall" : "Install"}\n`);
+  const mode = unlink ? "Uninstall" : refresh ? "Refresh" : "Install";
+  console.log(`\nWebToMobile — ${mode}\n`);
 
   if (!existsSync(CLAUDE_DIR)) {
     warn(`~/.claude/ not found — is Claude Code installed?`);

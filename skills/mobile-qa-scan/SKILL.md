@@ -20,29 +20,30 @@ Run commands and use the audit script JSON. Do not read source files unless a co
 node scripts/mobile-app-audit.mjs <target-path>
 ```
 
-Use the JSON for: framework, screens, incomplete markers, nav, auth, state, storage, test libraries, build config, and completion risks.
+Use the JSON for: framework, screens (implemented/partial/broken counts), incomplete markers, nav, auth, state, storage, test libraries, build config, and completion risks.
 
 **2. Run commands**
 
-Run each command that exists in `scripts` and record pass/fail and output:
+Discover commands in this priority order: check `scripts` in `package.json` first, then fall back to the tool directly, then check `devDependencies` for the tool.
 
-- Lint (e.g. `eslint`, `expo lint`).
-- Typecheck (e.g. `tsc --noEmit`).
-- Test suite (e.g. `jest`, `yarn test`).
-- Build or export smoke check (e.g. `expo export`).
+- **Lint**: `npm run lint` → `eslint .` → skip if eslint not in devDeps.
+- **Typecheck**: `npm run typecheck` → `tsc --noEmit` → skip if no tsconfig.
+- **Tests**: `npm test` → `jest` → skip if no test library detected.
+- **Build smoke check**: `npm run build` → `expo export` → skip if no expo in deps.
 
-If a command is missing, record it as not configured.
+Record pass/fail and captured output for each. If a command is missing, record as "not configured."
 
 **3. Write the QA Report**
 
-Create `docs/mobile-qa/YYYY-MM-DD-qa-report.md` with these sections:
+Create `docs/mobile-qa/YYYY-MM-DD-qa-report.md` with:
 
 - **Summary**: app name, framework, date.
 - **Build Health**: lint, typecheck, build — ✅ Pass / ⚠️ Warning / ❌ Fail per check.
-- **Test Coverage**: test libraries present, test files found, test run result.
-- **Structure Overview**: screen count, partial screens, nav type, key deps.
+- **Test Coverage**: test libraries present, test file count, test run result.
+- **Structure Overview**: screen counts (implemented/partial/broken), nav type, key deps.
+- **Bundle Size**: report `expo export` output size. ⚠️ Warn if >2 MB total, ❌ flag if >5 MB.
 - **Incomplete Markers**: TODO/FIXME/placeholder counts by file.
 - **Risks and Blockers**: from audit `completionRisks` plus command failures.
-- **Verdict**: Shippable / Needs Work / Blocked — with one-sentence rationale.
+- **Verdict**: `Shippable` / `Needs Work` / `Blocked` — with one-sentence rationale per area and an overall verdict.
 
 Return a brief summary to chat linking the report file.

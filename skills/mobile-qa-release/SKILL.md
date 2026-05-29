@@ -10,7 +10,7 @@ Verify before claiming the mobile migration is complete.
 
 ## Verification Rules
 
-Do not claim completion without fresh evidence. Work from the approved Markdown plan (under `docs/web-to-mobile/` or `docs/mobile-resume/` depending on the workflow) and the implementation changes.
+Do not claim completion without fresh evidence. Work from the approved Markdown plan (under `docs/web-to-mobile/` or `docs/mobile-resume/` depending on the workflow) and the implementation changes. If no plan file exists, proceed with generic checks, note the absence in the report, and skip checklist update steps.
 
 Run relevant checks from the plan and repo, such as:
 
