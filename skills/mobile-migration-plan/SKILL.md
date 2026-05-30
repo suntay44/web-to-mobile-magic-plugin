@@ -18,21 +18,21 @@ Use the stack the audit recommended. Revisit only if new Apple-native requiremen
 
 ## Plan File
 
-Create:
+For repo/local input create:
 
 ```text
 docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md
 ```
 
-Use the current local date. If that filename exists, append a short suffix such as `-2`.
+For URL-only input the scope is UI/UX only — create `docs/web-to-mobile/YYYY-MM-DD-ui-ux-spec.md` instead and limit the plan to layout, navigation, and visual direction (see `references/output-contracts.md`).
 
-Use `references/plan-template.md` as the template when available.
+Use the current local date. If that filename exists, append a short suffix such as `-2`. Use `references/plan-template.md` as the template when available.
 
 ## Required Sections
 
-Follow all sections in `references/plan-template.md` in order. The plan must cover Reusable Code, Rewrite-Required Code, Unknowns And Blockers, and the Implementation Checklist at minimum.
+Follow all sections in `references/plan-template.md` in order, including Capabilities & Limits, API Needs, and Human Sign-Off Required. The plan must cover Reusable Code, Rewrite-Required Code, Unknowns And Blockers, and the Implementation Checklist at minimum.
 
-The Implementation Checklist must use Markdown checkboxes with specific file paths, source → target mappings, and verification commands. Example: `- [ ] Port API client from \`src/api.ts\` to \`mobile/api.ts\`.`
+The Implementation Checklist must use Markdown checkboxes with specific file paths, source → target mappings, verification commands, and a confidence label (`[from-code]`, `[inferred]`, `[assumption]`) per item. Example: `- [ ] Port API client from \`src/api.ts\` to \`mobile/api.ts\` — \`[from-code]\`.`
 
 Avoid vague checklist items like "improve UI" or "add best practices".
 

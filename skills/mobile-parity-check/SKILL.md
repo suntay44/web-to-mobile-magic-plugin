@@ -40,6 +40,8 @@ Mark the following for explicit human visual sign-off — the agent cannot verif
 - Brand color rendering on screen.
 - Accessibility contrast ratios in the rendered UI.
 
+See Human Sign-Off Required in `references/output-contracts.md`.
+
 ## Plan Update
 
 Add a "Parity Review" section to the plan listing: agent-verified items, agent-flagged deviations, and items requiring human visual sign-off.

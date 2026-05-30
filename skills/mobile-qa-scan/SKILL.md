@@ -31,7 +31,7 @@ Discover commands in this priority order: check `scripts` in `package.json` firs
 - **Tests**: `npm test` → `jest` → skip if no test library detected.
 - **Build smoke check**: `npm run build` → `expo export` → skip if no expo in deps.
 
-Record pass/fail and captured output for each. If a command is missing, record as "not configured."
+Record pass/fail and captured output for each — no ✅ without captured output (see `references/output-contracts.md`). If a command is missing, record as "not configured."
 
 **3. Write the QA Report**
 

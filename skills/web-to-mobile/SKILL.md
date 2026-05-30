@@ -41,7 +41,7 @@ Classify the optional argument:
 - `https://github.com/<owner>/<repo>`: treat as a GitHub repository.
 - Local path: treat as a local source folder.
 
-For live websites, inspect public pages with available browser/fetch tools. Explain that code implementation requires repository access unless the user wants a visual approximation.
+For live websites, inspect public pages with available browser/fetch tools. This is the UI/UX-only tier: you can plan layout, navigation, and visual direction, but not logic, state, or API behavior. Explain that a faithful code port requires repository or local source access (see `references/output-contracts.md`).
 
 For GitHub repositories, clone or inspect the repo only when the environment and permissions allow it. If cloning is not possible, ask the user to provide a local checkout.
 
