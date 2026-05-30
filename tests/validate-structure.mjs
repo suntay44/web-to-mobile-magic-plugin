@@ -145,9 +145,25 @@ for (const phrase of [
   "browserApiUsage",
   "mobileRisks",
   "routeConfidence",
-  "scanInlineRoutes"
+  "scanInlineRoutes",
+  "renderingModel",
+  "internalApiRoutes",
+  "serverSignals"
 ]) {
   assert(auditScript.includes(phrase), `Audit script missing ${phrase}`);
+}
+
+const contracts = read("references/output-contracts.md");
+for (const phrase of [
+  "Scope Boundaries",
+  "Capability Tiers",
+  "Capability Downgrade",
+  "Confidence Labels",
+  "API Needs",
+  "Evidence-Backed Verdicts",
+  "Human Sign-Off Required"
+]) {
+  assert(contracts.includes(phrase), `Output contracts missing section: ${phrase}`);
 }
 
 const fixtureAudit = JSON.parse(execFileSync(
@@ -166,6 +182,9 @@ assert(fixtureAudit.routes.some((route) => route.route === "/dashboard"), "Fixtu
 assert(fixtureAudit.browserApiUsage.window?.length, "Fixture audit must detect window usage");
 assert(fixtureAudit.browserApiUsage.localStorage?.length, "Fixture audit must detect localStorage usage");
 assert(fixtureAudit.browserApiUsage.cookie?.length, "Fixture audit must detect cookie usage");
+assert(typeof fixtureAudit.renderingModel === "string", "Fixture audit must report renderingModel");
+assert(Array.isArray(fixtureAudit.internalApiRoutes), "Fixture audit must report internalApiRoutes array");
+assert(Array.isArray(fixtureAudit.serverSignals), "Fixture audit must report serverSignals array");
 
 const skill = read("skills/web-to-mobile/SKILL.md");
 
@@ -204,12 +223,17 @@ const skillChecks = {
     "node scripts/web-repo-audit.mjs",
     "Framework and runtime",
     "route/page inventory",
+    "Capability Tier",
+    "ui-ux-spec.md",
     "End with a clear handoff to `mobile-migration-plan`"
   ],
   "skills/mobile-migration-plan/SKILL.md": [
     "name: mobile-migration-plan",
     "docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md",
     "references/plan-template.md",
+    "ui-ux-spec.md",
+    "API Needs",
+    "[from-code]",
     "Reusable Code",
     "Rewrite-Required Code",
     "Unknowns And Blockers",

@@ -26,7 +26,55 @@ Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 
 WebToMobile gives AI coding agents six commands for web-to-mobile migration, unfinished mobile app completion, QA, and review.
 
-Each build-oriented command audits first, plans before building, and gates on your approval before writing code. Live websites can be audited and planned from public pages, but faithful implementation needs source access.
+Each build-oriented command audits first, plans before building, and gates on your approval before writing code. It's a **helper, not a magician** — what it can do for you depends entirely on what you give it.
+
+---
+
+## What You Give Determines What We Can Do
+
+WebToMobile has two tiers of input. Be honest about which one you're using, because the output is very different.
+
+### 🔗 You give a live URL → we help with **UI/UX only**
+
+We can `WebFetch` your public pages, read the rendered HTML/CSS, and infer your visual structure. From that we can plan and scaffold the **look and feel** of a mobile app:
+
+- Screen layout and navigation structure inferred from your pages
+- Visual hierarchy, color, and typography direction
+- A UI/UX-focused mobile shell you can wire up to your own backend
+
+**What we cannot do from a URL:** see your component logic, your state management, your API calls, or anything behind a login. So the result is a *visual starting point*, not a working port of your app. We'll say so in the plan.
+
+### 📦 You give a GitHub repo or local path → we do **much more than UI/UX**
+
+With source access we read your actual code, and the scope expands dramatically:
+
+- **Reuse real logic** — TypeScript types, API clients, validation schemas, state patterns, and non-DOM business logic ported directly
+- **Map every route** to a mobile screen with a concrete migration checklist
+- **Detect what needs rewriting** — DOM components, CSS layout, browser storage, cookies, OAuth redirects
+- **Audit auth, data, and storage** and plan mobile-safe equivalents
+- **Produce a real implementation plan**, then build it on your approval
+
+> **Rule of thumb:** URL gets you a faithful *interface*. Repo gets you a faithful *app*.
+
+---
+
+## Helper, Not Magician — Where the Line Is
+
+WebToMobile is a **skill/plugin that runs inside your AI coding agent**. It stays in its lane on purpose, so it does one job well instead of pretending to be a whole platform.
+
+**What it does:** audit your web source, write an approval-gated plan, implement it in Expo React Native, and verify the result with real evidence.
+
+**What it deliberately does *not* do:**
+
+| Not this | Because |
+|----------|---------|
+| Hosting, deployment, or CI/CD | We're a coding helper, not infrastructure. We list the release steps; your pipeline runs them. |
+| Backend / API generation | We reuse or consume your existing API. If a website is server-coupled with no client API, we flag it as a blocker — we don't invent one. |
+| No-code builder or design tool | We don't replace Figma or a designer. We translate what exists. |
+| App Store / Play Store submission | We produce the release checklist; a human submits. |
+| Secret/credential handling | We never request, store, or transmit keys or tokens. |
+
+Everything it produces is **evidence-backed and confidence-labeled** — facts from your code (`[from-code]`), inferences from your pages (`[inferred]`), and assumptions you must confirm (`[assumption]`) are never voiced in the same breath. Things only a human can judge — pixel fidelity, animation feel, brand color, contrast, real-device testing — are handed back to you explicitly, never silently claimed as done.
 
 ---
 
@@ -47,11 +95,13 @@ Each build-oriented command audits first, plans before building, and gates on yo
 
 ### 1 — No mobile app yet
 ```
-/web-to-mobile https://yourwebsite.com
-/web-to-mobile https://github.com/you/your-web-app
-/web-to-mobile ./local-web-project
+/web-to-mobile https://yourwebsite.com          # UI/UX only — visual starting point
+/web-to-mobile https://github.com/you/your-web-app   # full port — reuses real logic
+/web-to-mobile ./local-web-project                   # full port — reuses real logic
 ```
 Audit → Migration plan → *(your approval)* → Build → Parity check → QA
+
+> A URL gives us your interface; a repo gives us your app. See [What You Give Determines What We Can Do](#what-you-give-determines-what-we-can-do).
 
 ### 2 — Started but not done, wants to finish it
 ```
