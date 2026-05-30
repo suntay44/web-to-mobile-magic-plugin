@@ -148,6 +148,32 @@ for (const [name, label] of [
   if (allDeps[name]) frameworks.push(label);
 }
 
+// Early disqualification: detect inputs that are already mobile or have no
+// frontend to port, so the audit skill can stop and redirect immediately.
+const backendOnlyMarkers = ["express", "fastify", "koa", "hapi", "@nestjs/core", "nestjs", "django", "flask", "rails"];
+const isMobile =
+  frameworks.some((f) => ["Expo", "React Native"].includes(f)) ||
+  existsSync(join(root, "ios")) ||
+  existsSync(join(root, "android"));
+const hasWebFrontend = frameworks.some((f) => !["Expo", "React Native"].includes(f));
+const isBackendOnly =
+  !isMobile &&
+  !hasWebFrontend &&
+  backendOnlyMarkers.some((d) => allDeps[d]);
+const hasStaticHtml =
+  !isMobile && !hasWebFrontend && !isBackendOnly &&
+  existsSync(root) && readdirSync(root).some((f) => f.endsWith(".html"));
+
+const inputClassification = isMobile
+  ? "already-mobile"
+  : hasWebFrontend
+    ? "web-frontend"
+    : isBackendOnly
+      ? "backend-only"
+      : hasStaticHtml
+        ? "static-html"
+        : "unknown";
+
 const dependencyMatches = {};
 for (const [group, names] of Object.entries(dependencyGroups)) {
   dependencyMatches[group] = names.filter((name) => allDeps[name]);
@@ -255,6 +281,7 @@ console.log(JSON.stringify({
   dependencyMatches,
   dependencyNames: Object.keys(allDeps).sort(),
   sourceFilesScanned: sourceFiles.length,
+  inputClassification,
   routes,
   routeConfidence,
   renderingModel,
