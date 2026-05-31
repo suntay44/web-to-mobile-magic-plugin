@@ -5,6 +5,7 @@
 <img width="2172" height="724" alt="Banner" src="https://github.com/user-attachments/assets/aba6cdb2-4ab5-4aa6-9508-974616bb8d12" />
 
 ### Open-Source AI Skills & Plugin for Coding Agents
+### ⭐ Stars are appreciated!
 
 **Turn websites and web repos into audited mobile migration plans and Expo React Native implementation workflows.**<br />
 Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
