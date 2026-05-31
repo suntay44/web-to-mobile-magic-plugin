@@ -4,4 +4,4 @@ description: Audit an existing mobile app to identify what is complete, partial,
 
 Invoke the `mobile-app-audit` skill with any arguments provided.
 
-If the Skill tool is unavailable, read and follow `skills/mobile-app-audit/SKILL.md` directly (global install: `~/.claude/skills/mobile-app-audit/SKILL.md`).
+If skill invocation is unavailable, read and follow `skills/mobile-app-audit/SKILL.md` from this repo or the installed skills directory.

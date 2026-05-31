@@ -4,4 +4,4 @@ description: Senior-level deep review of an existing mobile app. Reads targeted 
 
 Invoke the `mobile-deep-review` skill with any arguments provided.
 
-If the Skill tool is unavailable, read and follow `skills/mobile-deep-review/SKILL.md` directly (global install: `~/.claude/skills/mobile-deep-review/SKILL.md`).
+If skill invocation is unavailable, read and follow `skills/mobile-deep-review/SKILL.md` from this repo or the installed skills directory.

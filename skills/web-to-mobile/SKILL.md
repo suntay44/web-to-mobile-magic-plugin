@@ -14,11 +14,7 @@ The public invocation is:
 /web-to-mobile [website_url | github_repo_url | local_path]
 ```
 
-In Codex surfaces, users may invoke this as:
-
-```text
-$web-to-mobile [website_url | github_repo_url | local_path]
-```
+In Codex, users can ask: "Use the web-to-mobile skill on [website_url | github_repo_url | local_path]."
 
 ## Route The Workflow
 
@@ -64,4 +60,3 @@ Use Swift/SwiftUI only when:
 - Re-read only the relevant plan sections for each phase.
 - Reference actual files, routes, dependencies, commands, or observed URLs.
 - Keep simple static sites lightweight and split complex SaaS apps into phases.
-

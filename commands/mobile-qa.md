@@ -4,4 +4,4 @@ description: Final QA verification of a mobile app against its approved plan. Co
 
 Invoke the `mobile-qa-release` skill with any arguments provided.
 
-If the Skill tool is unavailable, read and follow `skills/mobile-qa-release/SKILL.md` directly (global install: `~/.claude/skills/mobile-qa-release/SKILL.md`).
+If skill invocation is unavailable, read and follow `skills/mobile-qa-release/SKILL.md` from this repo or the installed skills directory.

@@ -42,7 +42,7 @@ The audit JSON covers framework, deps, scripts, routes, rendering model, interna
 
 ## What To Identify (URL Only)
 
-Use WebFetch. Check `/sitemap.xml` and `/robots.txt` first. Then: page inventory, navigation and key flows, native-sensitive features (forms, login, upload, maps, camera), responsive pain points, discoverable API calls, unknowns needing source access.
+Use the available browser/fetch tools. Check `/sitemap.xml` and `/robots.txt` first. Then: page inventory, navigation and key flows, native-sensitive features (forms, login, upload, maps, camera), responsive pain points, discoverable API calls, unknowns needing source access.
 
 ## Output
 

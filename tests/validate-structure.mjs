@@ -135,11 +135,18 @@ const readme = read("README.md");
 assert(readme.includes("six commands"), "README must describe the current six-command surface");
 assert(readme.includes("--refresh"), "README must document safe installer refresh behavior");
 assert(!readme.includes("$web-to-mobile and $mobile-resume invocation style works"), "README must avoid overpromising Codex invocation syntax");
+assert(readme.includes("Use the web-to-mobile skill on this repo."), "README must include concrete Codex usage wording");
 
 const installer = read("scripts/install.mjs");
 assert(installer.includes("--refresh"), "Installer must support --refresh");
 assert(installer.includes("isOwnedSymlink"), "Installer refresh/unlink must guard user-owned files");
 assert(!installer.includes("--force"), "Installer must not expose a broad --force mode");
+
+for (const manifestPath of [".codex-plugin/plugin.json", ".claude-plugin/plugin.json", ".cursor-plugin/plugin.json"]) {
+  const manifestText = read(manifestPath);
+  assert(manifestText.includes("https://github.com/suntay44/web-to-mobile-magic-plugin"), `${manifestPath} must use the real public repo URL`);
+  assert(!manifestText.includes("https://github.com/webtomobile/web-to-mobile"), `${manifestPath} must not use placeholder repo URLs`);
+}
 
 const auditScript = read("scripts/web-repo-audit.mjs");
 for (const phrase of [

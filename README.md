@@ -36,7 +36,7 @@ WebToMobile has two tiers of input. Be honest about which one you're using, beca
 
 ### 🔗 You give a live URL → we help with **UI/UX only**
 
-We can `WebFetch` your public pages, read the rendered HTML/CSS, and infer your visual structure. From that we can plan and scaffold the **look and feel** of a mobile app:
+We can use the agent's browser/fetch tools on your public pages, read the rendered HTML/CSS, and infer your visual structure. From that we can plan and scaffold the **look and feel** of a mobile app:
 
 - Screen layout and navigation structure inferred from your pages
 - Visual hierarchy, color, and typography direction
@@ -120,7 +120,7 @@ Runs commands only — no deep source reads. Produces a **Shippable / Needs Work
 ```
 /mobile-review ./my-app
 ```
-Reads up to 10 targeted files identified from the audit. Produces severity-tagged findings (Critical / High / Medium / Low) across architecture, code quality, robustness, performance, and security — with a prioritized action list.
+Reads up to 15 targeted files identified from the audit (proportional to repo size). Produces severity-tagged findings (Critical / High / Medium / Low) across architecture, code quality, robustness, performance, and security — with a prioritized action list.
 
 > **Difference between 3 and 4:** `/mobile-scan` is command-driven (cheap, fast). `/mobile-review` is code-driven (targeted, deep). Both start from the same audit script output to stay token-efficient.
 
@@ -148,6 +148,13 @@ The audit script summarizes a repo as structured JSON so the agent never blindly
 
 ## Install
 
+**Prerequisites:** [Node.js](https://nodejs.org) v18+ and at least one of: Claude Code (CLI or Desktop), Cursor, or Codex.
+
+```bash
+git clone https://github.com/suntay44/web-to-mobile-magic-plugin
+cd web-to-mobile-magic-plugin
+```
+
 ### Claude Code — CLI and Desktop App
 
 **Global install** (commands available in every project):
@@ -171,7 +178,7 @@ node scripts/install.mjs --refresh
 ```bash
 mkdir -p .claude/commands .claude/skills
 cp commands/* .claude/commands/
-cp -r skills/* .claude/skills/
+cp -r skills/. .claude/skills/
 ```
 
 Once installed, these slash commands are available in both the CLI and Desktop App:
@@ -198,13 +205,21 @@ The `.cursor-plugin/plugin.json` manifest is ready for when Cursor's plugin API 
 
 ### Codex
 
-Add this repo as a Codex plugin using the manifest:
+In Codex, go to **Settings → Plugins → Add Plugin** and point it to this repository (local path or GitHub URL). Codex will read the manifest at:
 
 ```
 .codex-plugin/plugin.json
 ```
 
-In Codex, install the plugin and ask Codex to use the `web-to-mobile` or `mobile-resume` skill. Some Codex surfaces may expose skill shortcuts or default prompts, but exact invocation depends on the Codex interface.
+After installation, ask Codex directly:
+
+```text
+Use the web-to-mobile skill on this repo.
+Use the web-to-mobile skill on https://github.com/you/your-web-app.
+Use the mobile-resume skill on ./my-unfinished-app.
+```
+
+Some Codex surfaces may expose skill shortcuts or default prompts, but exact invocation depends on the Codex interface.
 
 ---
 
@@ -239,9 +254,14 @@ web-to-mobile/
 │   ├── mobile-deep-review/    # Senior review (code-driven)
 │   ├── expo-react-native-build/# Build from approved checklist
 │   └── mobile-qa-release/     # Verify: perf, a11y, layout, release
+├── references/
+│   ├── output-contracts.md        # Shared behavioral rules for all skills
+│   ├── dependency-substitutions.md# Web → mobile dep swap map (drop-in/config/rewrite)
+│   └── framework-migration-notes.md# Per-framework reuse/rewrite guide
 ├── scripts/
 │   ├── web-repo-audit.mjs     # Summarizes a web project as JSON
-│   └── mobile-app-audit.mjs   # Summarizes a mobile app as JSON
+│   ├── mobile-app-audit.mjs   # Summarizes a mobile app as JSON
+│   └── install.mjs            # Global install / uninstall / refresh
 ├── examples/
 │   ├── sample-web-to-mobile-plan.md
 │   └── sample-mobile-completion-plan.md

@@ -4,4 +4,4 @@ description: Quick QA scan of an existing mobile app. Runs lint, typecheck, test
 
 Invoke the `mobile-qa-scan` skill with any arguments provided.
 
-If the Skill tool is unavailable, read and follow `skills/mobile-qa-scan/SKILL.md` directly (global install: `~/.claude/skills/mobile-qa-scan/SKILL.md`).
+If skill invocation is unavailable, read and follow `skills/mobile-qa-scan/SKILL.md` from this repo or the installed skills directory.

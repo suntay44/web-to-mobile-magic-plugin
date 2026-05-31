@@ -14,11 +14,7 @@ The public invocation is:
 /mobile-resume [local_path | github_repo_url]
 ```
 
-In Codex surfaces, users may invoke this as:
-
-```text
-$mobile-resume [local_path | github_repo_url]
-```
+In Codex, users can ask: "Use the mobile-resume skill on [local_path | github_repo_url]."
 
 ## Route The Workflow
 

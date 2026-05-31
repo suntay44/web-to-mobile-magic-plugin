@@ -4,4 +4,4 @@ description: Convert a website, GitHub repo, or local web project into an Expo R
 
 Invoke the `web-to-mobile` skill with any arguments provided.
 
-If the Skill tool is unavailable, read and follow `skills/web-to-mobile/SKILL.md` directly (global install: `~/.claude/skills/web-to-mobile/SKILL.md`).
+If skill invocation is unavailable, read and follow `skills/web-to-mobile/SKILL.md` from this repo or the installed skills directory.

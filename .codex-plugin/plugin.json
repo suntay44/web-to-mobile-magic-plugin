@@ -4,10 +4,10 @@
   "description": "Plan-first workflow for transforming websites and web apps into Expo React Native mobile apps.",
   "author": {
     "name": "WebToMobile contributors",
-    "url": "https://github.com/webtomobile/web-to-mobile"
+    "url": "https://github.com/suntay44/web-to-mobile-magic-plugin"
   },
-  "homepage": "https://github.com/webtomobile/web-to-mobile",
-  "repository": "https://github.com/webtomobile/web-to-mobile",
+  "homepage": "https://github.com/suntay44/web-to-mobile-magic-plugin",
+  "repository": "https://github.com/suntay44/web-to-mobile-magic-plugin",
   "license": "MIT",
   "keywords": [
     "web-to-mobile",
@@ -33,7 +33,7 @@
       "Use WebToMobile on the current workspace.",
       "Use WebToMobile on https://github.com/user/repo."
     ],
-    "websiteURL": "https://github.com/webtomobile/web-to-mobile",
+    "websiteURL": "https://github.com/suntay44/web-to-mobile-magic-plugin",
     "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
     "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
     "brandColor": "#0EA5E9"
