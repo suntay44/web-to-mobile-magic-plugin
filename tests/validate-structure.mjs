@@ -59,6 +59,8 @@ const requiredFiles = [
   "examples/sample-web-to-mobile-plan.md",
   "examples/sample-mobile-completion-plan.md",
   "references/output-contracts.md",
+  "references/dependency-substitutions.md",
+  "references/framework-migration-notes.md",
   "tests/pressure-scenarios.md"
 ];
 
@@ -185,6 +187,8 @@ assert(fixtureAudit.browserApiUsage.cookie?.length, "Fixture audit must detect c
 assert(typeof fixtureAudit.renderingModel === "string", "Fixture audit must report renderingModel");
 assert(Array.isArray(fixtureAudit.internalApiRoutes), "Fixture audit must report internalApiRoutes array");
 assert(Array.isArray(fixtureAudit.serverSignals), "Fixture audit must report serverSignals array");
+assert(typeof fixtureAudit.inputClassification === "string", "Fixture audit must report inputClassification");
+assert(fixtureAudit.inputClassification === "web-frontend", "Fixture audit must classify react-web fixture as web-frontend");
 
 const skill = read("skills/web-to-mobile/SKILL.md");
 
@@ -224,6 +228,10 @@ const skillChecks = {
     "Framework and runtime",
     "route/page inventory",
     "Capability Tier",
+    "Early Disqualification",
+    "already-mobile",
+    "backend-only",
+    "dependency-substitutions.md",
     "ui-ux-spec.md",
     "End with a clear handoff to `mobile-migration-plan`"
   ],
@@ -231,6 +239,8 @@ const skillChecks = {
     "name: mobile-migration-plan",
     "docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md",
     "references/plan-template.md",
+    "framework-migration-notes.md",
+    "dependency-substitutions.md",
     "ui-ux-spec.md",
     "API Needs",
     "[from-code]",

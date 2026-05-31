@@ -6,16 +6,7 @@ license: MIT
 
 # WebToMobile Audit
 
-Inspect the source before anyone plans or builds a mobile app.
-
-## Inputs
-
-Accept one target:
-
-- No target: current workspace.
-- Live website URL.
-- GitHub repository URL.
-- Local folder path.
+Inspect the source before anyone plans or builds a mobile app. Accept: current workspace (no argument), live URL, GitHub repo URL, or local path.
 
 ## Capability Tier
 
@@ -24,45 +15,35 @@ Declare the tier up front (see `references/output-contracts.md`):
 - **URL only** → UI/UX inspection only; no component logic, state, API, or authed pages.
 - **Repo or local** → full source analysis.
 
-If repo/local access was intended but fails (private repo, clone blocked), announce the downgrade and drop to the URL tier. Never silently do less.
+If repo/local access fails, announce the downgrade and drop to the URL tier. Never silently do less.
 
-## Required Behavior
+## Early Disqualification
 
-Do not propose implementation until the audit is complete or the inspection limits are documented.
+Run `node scripts/web-repo-audit.mjs <target-path>` first for local repos. Check `inputClassification`:
 
-For local repos, first run the bundled audit script when available:
+- `already-mobile` → stop. Repo has Expo/React Native/`ios`/`android`. Redirect to `/mobile-resume` or `/mobile-review`.
+- `backend-only` → stop. No frontend to port. Ask for the web client repo.
+- `static-html` → URL-tier scope only. No component logic to reuse.
+- `web-frontend` or `unknown` → proceed.
 
-```bash
-node scripts/web-repo-audit.mjs <target-path>
-```
+## What To Identify (Repo/Local)
 
-Use the JSON as a starting point. It covers framework, deps, scripts, routes, rendering model, internal API routes, browser-API risks, and config files — do not re-read those files unless a value is ambiguous.
+The audit JSON covers framework, deps, scripts, routes, rendering model, internal API routes, and browser-API risks — do not re-read those files unless a value is ambiguous. Additionally identify:
 
-For local or GitHub repos, identify:
-
-- Framework and runtime.
-- Package manager and useful scripts.
-- Routing system and route/page inventory.
-- Layout hierarchy and shared UI components.
-- API clients, data fetching, server actions, RPC, GraphQL, or REST usage.
-- Rendering model and backend coupling: SSR / server actions / internal API routes vs a SPA on an external API (`renderingModel`, `internalApiRoutes`). Server-coupled apps expose no portable API — record an API Needs blocker.
-- Auth model, sessions, cookies, OAuth redirects, protected routes.
-- State management, forms, validation, query/cache libraries.
+- Framework and runtime (from JSON `frameworks` array).
+- route/page inventory and layout hierarchy.
+- API clients, data fetching, server actions, RPC, GraphQL, REST.
+- Rendering model: `renderingModel` + `internalApiRoutes`. Server-coupled = no portable API; record as API Needs blocker.
+- Auth: sessions, cookies, OAuth, protected routes.
+- State, forms, validation, query/cache libraries.
 - Styling system and design tokens.
-- Assets: images, fonts, icons, media.
-- Browser-only dependencies and DOM assumptions.
-- Tests, lint, typecheck, build commands, and CI hints.
-- Environment variables and deployment assumptions.
+- Browser-only deps and DOM assumptions.
+- Env vars, tests, lint, build commands.
 
-For live websites, use WebFetch. Check `/sitemap.xml` and `/robots.txt` first for page inventory. Then identify:
+## What To Identify (URL Only)
 
-- Visible sitemap or page inventory.
-- Navigation model and key user flows.
-- Forms, login, checkout, upload, media, map, camera, or other native-sensitive features.
-- Responsive behavior and mobile pain points.
-- Public API calls if discoverable.
-- Unknowns that need source access.
+Use WebFetch. Check `/sitemap.xml` and `/robots.txt` first. Then: page inventory, navigation and key flows, native-sensitive features (forms, login, upload, maps, camera), responsive pain points, discoverable API calls, unknowns needing source access.
 
 ## Output
 
-Write raw findings into `## Audit Findings`. For repo/local input use `docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md`; for URL-only input use `docs/web-to-mobile/YYYY-MM-DD-ui-ux-spec.md` (create with just that section if the full plan is not ready). Use concrete evidence: file paths, routes, dep names, script names, URLs, risks, and unknowns. Tag findings `[from-code]`, `[inferred]`, or `[assumption]`. Return a brief summary to chat. End with a clear handoff to `mobile-migration-plan`.
+Consult `references/dependency-substitutions.md` when listing dep risks — tag each as drop-in / config / rewrite. Write findings into `## Audit Findings` in the plan file (repo/local: `docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md`; URL-only: `docs/web-to-mobile/YYYY-MM-DD-ui-ux-spec.md`). Use concrete evidence. Tag findings `[from-code]`, `[inferred]`, or `[assumption]`. Return a brief summary. End with a clear handoff to `mobile-migration-plan`.

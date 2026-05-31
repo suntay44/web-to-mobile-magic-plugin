@@ -32,6 +32,8 @@ Use the current local date. If that filename exists, append a short suffix such 
 
 Follow all sections in `references/plan-template.md` in order, including Capabilities & Limits, API Needs, and Human Sign-Off Required. The plan must cover Reusable Code, Rewrite-Required Code, Unknowns And Blockers, and the Implementation Checklist at minimum.
 
+Before writing the checklist, consult `references/framework-migration-notes.md` for the detected framework's reusable vs rewrite-required split. Consult `references/dependency-substitutions.md` for each detected dependency's mobile equivalent and difficulty rating. Use these to populate Reusable Code, Rewrite-Required Code, and Unknowns sections accurately.
+
 The Implementation Checklist must use Markdown checkboxes with specific file paths, source → target mappings, verification commands, and a confidence label (`[from-code]`, `[inferred]`, `[assumption]`) per item. Example: `- [ ] Port API client from \`src/api.ts\` to \`mobile/api.ts\` — \`[from-code]\`.`
 
 Avoid vague checklist items like "improve UI" or "add best practices".
