@@ -2,7 +2,7 @@
 
 <br />
 
-# WEBSITES TO MOBILE
+<img width="2172" height="724" alt="Banner" src="https://github.com/user-attachments/assets/aba6cdb2-4ab5-4aa6-9508-974616bb8d12" />
 
 ### AI Skills & Plugin for Coding Agents
 
@@ -12,7 +12,8 @@ Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 <br />
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Works with Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://claude.ai/code)
+[![Works with Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-darkorange)](https://claude.ai/code)
+[![Works with Codex](https://img.shields.io/badge/Codex-Plugin-blue)](https://chatgpt.com/codex)
 [![Works with Cursor](https://img.shields.io/badge/Cursor-Plugin-black)](https://cursor.sh)
 [![Expo React Native](https://img.shields.io/badge/Target-Expo%20React%20Native-4630EB)](https://expo.dev)
 
