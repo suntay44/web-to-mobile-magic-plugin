@@ -80,6 +80,35 @@ Everything it produces is **evidence-backed and confidence-labeled** — facts f
 
 ---
 
+## Updating
+
+Most users should update with one command from the cloned repo:
+
+```bash
+node scripts/install.mjs --update
+```
+
+`--update` pulls the latest WebToMobile from GitHub, then refreshes the installed Claude commands and skills.
+
+Use `--refresh` only when you already have the version you want locally:
+
+```bash
+node scripts/install.mjs --refresh
+```
+
+Common cases:
+
+| Use case | Command |
+|----------|---------|
+| You want the latest release from GitHub | `node scripts/install.mjs --update` |
+| You edited the plugin locally and want Claude to use your edits | `node scripts/install.mjs --refresh` |
+| You already ran `git pull` yourself | `node scripts/install.mjs --refresh` |
+| You installed from a ZIP download | Download the latest ZIP, replace the folder, then run `node scripts/install.mjs --refresh` |
+
+`--update` refuses to run if you have local uncommitted changes. It will ask you to commit/stash or update manually first.
+
+---
+
 ## Commands
 
 | Command | Scenario | What it does |
@@ -152,6 +181,14 @@ The audit script summarizes a repo as structured JSON so the agent never blindly
 
 **Prerequisites:** [Node.js](https://nodejs.org) v18+ and at least one of: Claude Code (CLI or Desktop), Cursor, or Codex.
 
+**Codex users:** use this HTTPS URL when adding the plugin:
+
+```text
+https://github.com/suntay44/web-to-mobile-magic-plugin
+```
+
+Do not use the SSH URL unless your machine already has GitHub SSH keys configured.
+
 ```bash
 git clone https://github.com/suntay44/web-to-mobile-magic-plugin
 cd web-to-mobile-magic-plugin
@@ -170,10 +207,10 @@ Symlinks all commands to `~/.claude/commands/` and all skills to `~/.claude/skil
 To update an existing WebToMobile install:
 
 ```bash
-node scripts/install.mjs --refresh
+node scripts/install.mjs --update
 ```
 
-`--refresh` only replaces WebToMobile-owned symlinks. It skips user-owned files with the same names.
+For local edits or manual `git pull`, use `node scripts/install.mjs --refresh`. Refresh only replaces WebToMobile-owned symlinks and skips user-owned files with the same names.
 
 **Project-level install** (commands available in this project only):
 
@@ -207,7 +244,13 @@ The `.cursor-plugin/plugin.json` manifest is ready for when Cursor's plugin API 
 
 ### Codex
 
-In Codex, go to **Settings → Plugins → Add Plugin** and point it to this repository (local path or GitHub URL). Codex will read the manifest at:
+In Codex, go to **Settings → Plugins → Add Plugin** and point it to this repository using the HTTPS URL:
+
+```text
+https://github.com/suntay44/web-to-mobile-magic-plugin
+```
+
+Do not use the SSH form (`git@github.com:suntay44/web-to-mobile-magic-plugin.git`) unless your machine already has GitHub SSH keys configured. Codex will read the manifest at:
 
 ```
 .codex-plugin/plugin.json
@@ -222,6 +265,28 @@ Use the mobile-resume skill on ./my-unfinished-app.
 ```
 
 Some Codex surfaces may expose skill shortcuts or default prompts, but exact invocation depends on the Codex interface.
+
+If you see `Permission denied (publickey)` during plugin install, Codex is trying to clone with SSH. Retry with the HTTPS URL above.
+
+---
+
+## Troubleshooting
+
+### Codex: `Permission denied (publickey)`
+
+This means Codex tried to clone the plugin with SSH:
+
+```text
+git@github.com:suntay44/web-to-mobile-magic-plugin.git
+```
+
+SSH requires GitHub SSH keys on the user's machine. Use the HTTPS URL instead:
+
+```text
+https://github.com/suntay44/web-to-mobile-magic-plugin
+```
+
+Then retry adding the plugin in Codex.
 
 ---
 

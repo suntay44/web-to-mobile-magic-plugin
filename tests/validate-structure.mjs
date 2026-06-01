@@ -133,11 +133,15 @@ assert(command.includes("Invoke the `web-to-mobile` skill"), "Command must invok
 
 const readme = read("README.md");
 assert(readme.includes("six commands"), "README must describe the current six-command surface");
+assert(readme.includes("--update"), "README must document normal update behavior");
 assert(readme.includes("--refresh"), "README must document safe installer refresh behavior");
+assert(readme.includes("You edited the plugin locally"), "README must explain the main refresh use case");
 assert(!readme.includes("$web-to-mobile and $mobile-resume invocation style works"), "README must avoid overpromising Codex invocation syntax");
 assert(readme.includes("Use the web-to-mobile skill on this repo."), "README must include concrete Codex usage wording");
 
 const installer = read("scripts/install.mjs");
+assert(installer.includes("--update"), "Installer must support --update");
+assert(installer.includes("git pull"), "Installer update must pull from git");
 assert(installer.includes("--refresh"), "Installer must support --refresh");
 assert(installer.includes("isOwnedSymlink"), "Installer refresh/unlink must guard user-owned files");
 assert(!installer.includes("--force"), "Installer must not expose a broad --force mode");

@@ -6,9 +6,11 @@
  *
  * Usage:
  *   node scripts/install.mjs           # install missing commands/skills
+ *   node scripts/install.mjs --update  # pull latest from GitHub, then refresh install
  *   node scripts/install.mjs --refresh # refresh WebToMobile-owned symlinks
  *   node scripts/install.mjs --unlink  # remove WebToMobile-owned symlinks
  */
+import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, readlinkSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { symlink, copyFile, cp } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
@@ -20,6 +22,8 @@ const home = homedir();
 const isWindows = platform() === "win32";
 const unlink = process.argv.includes("--unlink");
 const refresh = process.argv.includes("--refresh");
+const update = process.argv.includes("--update");
+const shouldRefresh = refresh || update;
 
 const CLAUDE_DIR = join(home, ".claude");
 const COMMANDS_DEST = join(CLAUDE_DIR, "commands");
@@ -53,11 +57,44 @@ function isOwnedSymlink(dest) {
   return stat.isSymbolicLink() && symlinkTarget(dest).startsWith(root);
 }
 
+function runGit(args, options = {}) {
+  return execFileSync("git", ["-C", root, ...args], {
+    encoding: "utf8",
+    stdio: options.stdio || ["ignore", "pipe", "pipe"],
+  });
+}
+
+function updateRepo() {
+  try {
+    runGit(["rev-parse", "--is-inside-work-tree"]);
+  } catch {
+    warn("This folder is not a git checkout.");
+    warn("Download the latest ZIP from GitHub, replace this folder, then run: node scripts/install.mjs --refresh");
+    process.exit(1);
+  }
+
+  const status = runGit(["status", "--porcelain"]).trim();
+  if (status) {
+    warn("Local changes detected; refusing to update automatically.");
+    warn("Commit/stash your changes, or run git pull yourself, then: node scripts/install.mjs --refresh");
+    process.exit(1);
+  }
+
+  console.log("Updating local repo from GitHub...");
+  try {
+    execFileSync("git", ["-C", root, "pull", "--ff-only"], { stdio: "inherit" });
+    ok("Repository updated");
+  } catch {
+    warn("git pull --ff-only failed. Resolve the git issue manually, then run: node scripts/install.mjs --refresh");
+    process.exit(1);
+  }
+}
+
 async function linkOrCopy(src, dest, label) {
   if (pathExists(dest)) {
-    if (refresh && isOwnedSymlink(dest)) {
+    if (shouldRefresh && isOwnedSymlink(dest)) {
       unlinkSync(dest);
-    } else if (refresh) {
+    } else if (shouldRefresh) {
       warn(`${label} — exists but is not a WebToMobile symlink; skipped`);
       return;
     } else {
@@ -94,8 +131,15 @@ function removeLink(dest, label) {
 }
 
 async function main() {
-  const mode = unlink ? "Uninstall" : refresh ? "Refresh" : "Install";
+  if (unlink && update) {
+    warn("Choose either --unlink or --update, not both.");
+    process.exit(1);
+  }
+
+  const mode = unlink ? "Uninstall" : update ? "Update" : refresh ? "Refresh" : "Install";
   console.log(`\nWebToMobile — ${mode}\n`);
+
+  if (update) updateRepo();
 
   if (!existsSync(CLAUDE_DIR)) {
     warn(`~/.claude/ not found — is Claude Code installed?`);
