@@ -7,7 +7,11 @@
     "url": "https://github.com/suntay44/web-to-mobile-magic-plugin"
   },
   "homepage": "https://github.com/suntay44/web-to-mobile-magic-plugin",
-  "repository": "https://github.com/suntay44/web-to-mobile-magic-plugin",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suntay44/web-to-mobile-magic-plugin.git"
+  },
+  "cloneUrl": "https://github.com/suntay44/web-to-mobile-magic-plugin.git",
   "license": "MIT",
   "keywords": [
     "web-to-mobile",

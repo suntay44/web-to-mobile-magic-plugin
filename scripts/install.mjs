@@ -147,7 +147,7 @@ async function main() {
     console.log("\nFor project-level install instead, run from your project root:");
     console.log("  mkdir -p .claude/commands .claude/skills");
     console.log(`  cp ${join(root, "commands")}/* .claude/commands/`);
-    console.log(`  cp -r ${join(root, "skills")}/* .claude/skills/`);
+    console.log(`  cp -r ${join(root, "skills")}/. .claude/skills/`);
     process.exit(0);
   }
 
@@ -190,7 +190,9 @@ async function main() {
   console.log("  Cursor loads these as AI rules (slash commands coming soon).");
 
   console.log("\n── Codex ───────────────────────────────────────────────");
-  console.log("  Add this repo as a Codex plugin via .codex-plugin/plugin.json.");
+  console.log("  In Codex: Settings → Plugins → Add Plugin");
+  console.log("  Use HTTPS URL: https://github.com/suntay44/web-to-mobile-magic-plugin");
+  console.log("  (Do not use the SSH URL — Codex clones via HTTPS for public repos.)");
 
   console.log("\n── Validate ────────────────────────────────────────────");
   console.log("  node tests/validate-structure.mjs\n");
