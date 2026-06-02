@@ -2,6 +2,8 @@
 
 Per-framework migration guidance. Used by `mobile-migration-plan` when writing Reusable Code, Rewrite-Required Code, and Unknowns sections. Match the detected framework from the audit JSON `frameworks` array.
 
+> *Audience: the AI agent. The agent reads the section matching your framework. Useful for humans planning a migration by hand too.*
+
 ---
 
 ## Next.js — App Router (`app/` directory)

@@ -2,6 +2,7 @@
 node_modules/
 .env
 .env.*
+!tests/fixtures/**/.env.example
 dist/
 build/
 .expo/

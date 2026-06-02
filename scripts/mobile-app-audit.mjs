@@ -25,6 +25,12 @@ const navigationLibs = [
   "@react-navigation/drawer",
   "expo-router",
 ];
+const navTypePatterns = [
+  ["stack", /createStackNavigator|createNativeStackNavigator|Stack\.Navigator/g],
+  ["tabs", /createBottomTabNavigator|createMaterialTopTabNavigator|Tabs\.Navigator|Tab\.Navigator/g],
+  ["drawer", /createDrawerNavigator|Drawer\.Navigator/g],
+  ["file-based", /expo-router|from ['"]expo-router['"]/g],
+];
 const authLibs = [
   "@clerk/clerk-expo",
   "expo-auth-session",
@@ -142,6 +148,23 @@ function detectTestFiles(files) {
   return tests;
 }
 
+function detectNavigationTypes(files) {
+  const navigationTypes = new Set();
+  for (const file of files) {
+    let text = "";
+    try {
+      text = readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    for (const [type, pattern] of navTypePatterns) {
+      pattern.lastIndex = 0;
+      if (pattern.test(text)) navigationTypes.add(type);
+    }
+  }
+  return [...navigationTypes];
+}
+
 const packageJson = readJson(join(root, "package.json"));
 const appJson = readJson(join(root, "app.json"));
 
@@ -170,6 +193,7 @@ const dependencyMatches = {
 
 const sourceFiles = walk(root, []);
 const screens = detectScreens(sourceFiles, isExpoRouter);
+const navigationTypes = detectNavigationTypes(sourceFiles);
 const incompleteMarkers = scanIncompleteMarkers(sourceFiles);
 const testFiles = detectTestFiles(sourceFiles);
 
@@ -209,6 +233,7 @@ console.log(
       scripts: packageJson?.scripts || {},
       frameworks,
       dependencyMatches,
+      navigationTypes,
       sourceFilesScanned: sourceFiles.length,
       screens,
       partialScreenCount: partialScreens.length,

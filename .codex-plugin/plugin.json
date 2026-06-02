@@ -1,6 +1,6 @@
 {
   "name": "web-to-mobile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Plan-first workflow for transforming websites and web apps into Expo React Native mobile apps.",
   "author": {
     "name": "WebToMobile contributors",
@@ -11,7 +11,6 @@
     "type": "git",
     "url": "https://github.com/suntay44/web-to-mobile-magic-plugin.git"
   },
-  "cloneUrl": "https://github.com/suntay44/web-to-mobile-magic-plugin.git",
   "license": "MIT",
   "keywords": [
     "web-to-mobile",

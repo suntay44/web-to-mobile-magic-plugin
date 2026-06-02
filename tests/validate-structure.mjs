@@ -38,10 +38,15 @@ const requiredFiles = [
   "scripts/mobile-app-audit.mjs",
   "scripts/install.mjs",
   "tests/fixtures/react-web/package.json",
+  "tests/fixtures/react-web/.env.example",
   "tests/fixtures/react-web/src/App.tsx",
   "tests/fixtures/react-web/tailwind.config.js",
+  "tests/fixtures/next-app-router/package.json",
+  "tests/fixtures/next-app-router/app/page.tsx",
+  "tests/fixtures/next-app-router/app/dashboard/page.tsx",
   "tests/fixtures/partial-expo-app/package.json",
   "tests/fixtures/partial-expo-app/app.json",
+  "tests/fixtures/partial-expo-app/src/navigation/AppNavigator.tsx",
   "tests/fixtures/partial-expo-app/src/screens/HomeScreen.tsx",
   "tests/fixtures/partial-expo-app/src/screens/ProfileScreen.tsx",
   "skills/web-to-mobile/SKILL.md",
@@ -95,9 +100,10 @@ for (const [name, manifest] of [
   [".cursor-plugin/plugin.json", cursor]
 ]) {
   assert(manifest.name === "web-to-mobile", `${name} must use name web-to-mobile`);
-  assert(manifest.version === "0.1.0", `${name} must use version 0.1.0`);
+  assert(manifest.version === "0.2.0", `${name} must use version 0.2.0`);
   assert(manifest.skills === "./skills/", `${name} must point skills to ./skills/`);
   assert(manifest.license === "MIT", `${name} must use MIT license`);
+  assert(!Object.prototype.hasOwnProperty.call(manifest, "cloneUrl"), `${name} must not use unsupported cloneUrl`);
 }
 
 assert(codex.interface?.displayName === "WebToMobile", "Codex manifest must include displayName");
@@ -138,10 +144,13 @@ assert(readme.includes("--refresh"), "README must document safe installer refres
 assert(readme.includes("You edited the plugin locally"), "README must explain the main refresh use case");
 assert(!readme.includes("$web-to-mobile and $mobile-resume invocation style works"), "README must avoid overpromising Codex invocation syntax");
 assert(readme.includes("Use the web-to-mobile skill on this repo."), "README must include concrete Codex usage wording");
+assert(!/\d+-\d+%\s+(faster|less|fewer)/.test(readme), "README must not make unverifiable percentage benchmark claims");
 
 const installer = read("scripts/install.mjs");
 assert(installer.includes("--update"), "Installer must support --update");
 assert(installer.includes("git pull"), "Installer update must pull from git");
+assert(installer.includes("readPluginVersion"), "Installer update must display plugin version status");
+assert(installer.includes("Already at latest"), "Installer update must explain no-op updates");
 assert(installer.includes("--refresh"), "Installer must support --refresh");
 assert(installer.includes("isOwnedSymlink"), "Installer refresh/unlink must guard user-owned files");
 assert(!installer.includes("--force"), "Installer must not expose a broad --force mode");
@@ -161,7 +170,10 @@ for (const phrase of [
   "scanInlineRoutes",
   "renderingModel",
   "internalApiRoutes",
-  "serverSignals"
+  "serverSignals",
+  "nextjsRouter",
+  "vueVersion",
+  "envVarNames"
 ]) {
   assert(auditScript.includes(phrase), `Audit script missing ${phrase}`);
 }
@@ -198,8 +210,24 @@ assert(fixtureAudit.browserApiUsage.cookie?.length, "Fixture audit must detect c
 assert(typeof fixtureAudit.renderingModel === "string", "Fixture audit must report renderingModel");
 assert(Array.isArray(fixtureAudit.internalApiRoutes), "Fixture audit must report internalApiRoutes array");
 assert(Array.isArray(fixtureAudit.serverSignals), "Fixture audit must report serverSignals array");
+assert(Object.prototype.hasOwnProperty.call(fixtureAudit, "nextjsRouter"), "Fixture audit must include nextjsRouter field");
+assert(Object.prototype.hasOwnProperty.call(fixtureAudit, "vueVersion"), "Fixture audit must include vueVersion field");
+assert(Array.isArray(fixtureAudit.envVarNames), "Fixture audit must include envVarNames array");
+assert(fixtureAudit.envVarNames.includes("VITE_SUPABASE_URL"), "Fixture audit must extract env var names");
 assert(typeof fixtureAudit.inputClassification === "string", "Fixture audit must report inputClassification");
 assert(fixtureAudit.inputClassification === "web-frontend", "Fixture audit must classify react-web fixture as web-frontend");
+
+const nextAppAudit = JSON.parse(execFileSync(
+  "node",
+  ["scripts/web-repo-audit.mjs", "tests/fixtures/next-app-router"],
+  { cwd: root, encoding: "utf8" }
+));
+
+assert(nextAppAudit.frameworks.includes("Next.js"), "Next fixture audit must detect Next.js");
+assert(nextAppAudit.nextjsRouter === "app-router", "Next fixture audit must detect App Router");
+assert(nextAppAudit.serverSignals.includes("use-client-directive"), "Next fixture audit must detect use client directives");
+assert(nextAppAudit.serverSignals.includes("server-components"), "Next fixture audit must detect server components");
+assert(nextAppAudit.mobileRisks.includes("server-component-data-fetching-review"), "Next fixture audit must flag server components for API review when not server-coupled");
 
 const skill = read("skills/web-to-mobile/SKILL.md");
 
@@ -264,6 +292,7 @@ const skillChecks = {
   "skills/expo-react-native-build/SKILL.md": [
     "name: expo-react-native-build",
     "The user approved implementation",
+    "dependency-substitutions.md",
     "Update checklist items",
     "End by handing off to `mobile-qa-release`"
   ],
@@ -290,6 +319,9 @@ const mobileAudit = JSON.parse(execFileSync(
 
 assert(mobileAudit.frameworks.some((f) => f.includes("Expo")), "Mobile fixture audit must detect Expo");
 assert(mobileAudit.dependencyMatches.navigation.includes("@react-navigation/native"), "Mobile fixture audit must detect navigation");
+assert(Array.isArray(mobileAudit.navigationTypes), "Mobile fixture audit must include navigationTypes array");
+assert(mobileAudit.navigationTypes.includes("stack"), "Mobile fixture audit must detect stack navigation");
+assert(mobileAudit.navigationTypes.includes("tabs"), "Mobile fixture audit must detect tab navigation");
 assert(mobileAudit.screens.some((s) => s.status === "partial"), "Mobile fixture audit must detect partial screens");
 assert(mobileAudit.incompleteMarkers.todo?.length > 0, "Mobile fixture audit must detect TODO markers");
 assert(mobileAudit.completionRisks.includes("partial-screens"), "Mobile fixture audit must flag partial-screens risk");

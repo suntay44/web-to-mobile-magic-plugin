@@ -26,47 +26,33 @@ Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 
 ## What It Does
 
-WebToMobile gives AI coding agents six commands for web-to-mobile migration, unfinished mobile app completion, QA, and review.
+WebToMobile gives AI coding agents six commands for website-to-mobile work:
 
-Each build-oriented command audits first, plans before building, and gates on your approval before writing code. It's a **helper, not a magician** — what it can do for you depends entirely on what you give it.
+- Convert a website or web repo into an Expo React Native migration plan
+- Finish an unfinished mobile app
+- Run QA checks and senior-style mobile reviews
+- Keep the workflow audit-first, plan-first, and approval-gated
+
+It is a **helper, not a magician**. The quality of the result depends on the source you provide.
 
 ---
 
-## What You Give Determines What We Can Do
+## Input Matters
 
-WebToMobile has two tiers of input. Be honest about which one you're using, because the output is very different.
-
-### 🔗 You give a live URL → we help with **UI/UX only**
-
-We can use the agent's browser/fetch tools on your public pages, read the rendered HTML/CSS, and infer your visual structure. From that we can plan and scaffold the **look and feel** of a mobile app:
-
-- Screen layout and navigation structure inferred from your pages
-- Visual hierarchy, color, and typography direction
-- A UI/UX-focused mobile shell you can wire up to your own backend
-
-**What we cannot do from a URL:** see your component logic, your state management, your API calls, or anything behind a login. So the result is a *visual starting point*, not a working port of your app. We'll say so in the plan.
-
-### 📦 You give a GitHub repo or local path → we do **much more than UI/UX**
-
-With source access we read your actual code, and the scope expands dramatically:
-
-- **Reuse real logic** — TypeScript types, API clients, validation schemas, state patterns, and non-DOM business logic ported directly
-- **Map every route** to a mobile screen with a concrete migration checklist
-- **Detect what needs rewriting** — DOM components, CSS layout, browser storage, cookies, OAuth redirects
-- **Audit auth, data, and storage** and plan mobile-safe equivalents
-- **Produce a real implementation plan**, then build it on your approval
+| You provide | What WebToMobile can do |
+|-------------|--------------------------|
+| Live website URL | UI/UX-focused mobile plan from public pages: layout, navigation, visual hierarchy, and a mobile shell. It cannot see private code, API logic, state, auth, or anything behind login. |
+| GitHub repo or local path | Full source-backed migration plan: routes, framework, scripts, auth, APIs, styling, browser-only APIs, env vars, reusable logic, rewrite-required code, mobile-native gaps, and blockers. |
 
 > **Rule of thumb:** URL gets you a faithful *interface*. Repo gets you a faithful *app*.
 
 ---
 
-## Helper, Not Magician — Where the Line Is
+## Scope
 
-WebToMobile is a **skill/plugin that runs inside your AI coding agent**. It stays in its lane on purpose, so it does one job well instead of pretending to be a whole platform.
+WebToMobile runs inside your AI coding agent. It audits your web source, writes an approval-gated plan, implements the approved checklist in Expo React Native, and verifies the result with real evidence.
 
-**What it does:** audit your web source, write an approval-gated plan, implement it in Expo React Native, and verify the result with real evidence.
-
-**What it deliberately does *not* do:**
+It deliberately does **not** replace your backend, deploy infrastructure, submit to app stores, or handle secrets.
 
 | Not this | Because |
 |----------|---------|
@@ -76,7 +62,21 @@ WebToMobile is a **skill/plugin that runs inside your AI coding agent**. It stay
 | App Store / Play Store submission | We produce the release checklist; a human submits. |
 | Secret/credential handling | We never request, store, or transmit keys or tokens. |
 
-Everything it produces is **evidence-backed and confidence-labeled** — facts from your code (`[from-code]`), inferences from your pages (`[inferred]`), and assumptions you must confirm (`[assumption]`) are never voiced in the same breath. Things only a human can judge — pixel fidelity, animation feel, brand color, contrast, real-device testing — are handed back to you explicitly, never silently claimed as done.
+Outputs are evidence-backed and confidence-labeled: `[from-code]`, `[inferred]`, or `[assumption]`. Human-only checks like pixel fidelity, animation feel, brand judgment, and real-device testing are called out explicitly.
+
+---
+
+## Why It Helps
+
+Going from a website to a mobile app usually means a lot of manual back-and-forth: explaining your project, hunting for which parts can be reused, and hoping nothing important gets missed. WebToMobile turns that into a repeatable flow.
+
+- **One command instead of many prompts.** You point it at your source once; it does the audit instead of you re-explaining the project each turn.
+- **Reusable vs. rewrite is decided for you.** The audit separates code you can port directly from code that needs a mobile rewrite, so you are not guessing.
+- **Risks surface before you build.** Auth, API, storage, browser-only APIs, routing, and server-coupling issues are flagged in the plan — not discovered halfway through.
+- **The plan is your memory.** Progress lives in a Markdown checklist you can read, resume, and review — not buried in chat history.
+- **Checks happen before "done."** Verification is part of the workflow, not something you have to remember to ask for.
+
+> Results depend on your project's size, framework, and how much source access you give the agent. A URL gives less than a full repo.
 
 ---
 
@@ -113,81 +113,58 @@ Common cases:
 
 | Command | Scenario | What it does |
 |---------|----------|--------------|
-| `/web-to-mobile` | **Start from scratch** | Convert a website, GitHub repo, or local web project into an Expo React Native app |
-| `/mobile-resume` | **Finish what's started** | Audit an unfinished mobile app, plan what's left, and implement the remaining work |
-| `/mobile-scan` | **QA report** | Run lint, typecheck, tests, and build checks — produce a structured pass/fail report |
-| `/mobile-review` | **Deep senior review** | Read key source files and analyze architecture, code quality, robustness, performance, and security |
+| `/web-to-mobile` | **Start from a website or web app** | Audit, plan, approve, build, parity-check, and QA an Expo React Native migration |
+| `/mobile-resume` | **Finish an unfinished mobile app** | Audit the app, plan remaining work, approve, build, and QA |
+| `/mobile-scan` | **Fast QA report** | Run commands only and produce a Shippable / Needs Work / Blocked report |
+| `/mobile-review` | **Deep senior review** | Read targeted files and report architecture, quality, robustness, performance, and security issues |
 | `/mobile-audit` | **Mobile audit only** | Inspect an existing mobile app and report complete, partial, and missing areas |
 | `/mobile-qa` | **Final verification** | Verify a mobile app against its approved plan before completion |
 
 ---
 
-## The 4 Scenarios
+## Typical Use
 
-### 1 — No mobile app yet
 ```
 /web-to-mobile https://yourwebsite.com          # UI/UX only — visual starting point
 /web-to-mobile https://github.com/you/your-web-app   # full port — reuses real logic
 /web-to-mobile ./local-web-project                   # full port — reuses real logic
 ```
-Audit → Migration plan → *(your approval)* → Build → Parity check → QA
 
-> A URL gives us your interface; a repo gives us your app. See [What You Give Determines What We Can Do](#what-you-give-determines-what-we-can-do).
-
-### 2 — Started but not done, wants to finish it
 ```
 /mobile-resume ./my-unfinished-app
 /mobile-resume https://github.com/you/unfinished-app
 ```
-Audit → Completion plan → *(your approval)* → Build remaining → QA
 
-### 3 — Wants a QA report (surface-level check)
 ```
 /mobile-scan ./my-app
-```
-Runs commands only — no deep source reads. Produces a **Shippable / Needs Work / Blocked** verdict with a structured report covering build health, test coverage, structure, and risks.
-
-### 4 — Wants a senior developer + QA deep review
-```
 /mobile-review ./my-app
 ```
-Reads up to 15 targeted files identified from the audit (proportional to repo size). Produces severity-tagged findings (Critical / High / Medium / Low) across architecture, code quality, robustness, performance, and security — with a prioritized action list.
 
-> **Difference between 3 and 4:** `/mobile-scan` is command-driven (cheap, fast). `/mobile-review` is code-driven (targeted, deep). Both start from the same audit script output to stay token-efficient.
+Build commands follow:
+
+```text
+Audit -> Markdown plan -> your approval -> implementation -> verification
+```
+
+`/mobile-scan` is command-driven and cheaper. `/mobile-review` is code-driven and deeper. Both start from audit output to stay token-efficient.
 
 ---
 
 ## How It Works
 
-Every command follows the same principle: **audit script first, targeted reads only, plan before code.**
+WebToMobile uses small audit scripts first, then targeted reads only when needed.
 
 ```
-Audit script → JSON summary (framework, screens, deps, risks)
-     ↓
-Commands or targeted file reads (depending on the command)
-     ↓
-Markdown plan or report written to docs/
-     ↓
-Approval gate (build commands only — scan and review skip this)
-     ↓
-Implementation or report delivered
+Audit script -> JSON summary -> targeted reads -> Markdown plan/report -> approval gate -> build or review
 ```
 
-The audit script summarizes a repo as structured JSON so the agent never blindly reads the entire codebase. Each skill loads one phase at a time. The Markdown plan acts as external memory between phases so context stays lean.
+The Markdown plan acts as external memory between phases, so the agent does not need to keep re-reading or re-explaining the whole project.
 
 ---
 
 ## Install
 
 **Prerequisites:** [Node.js](https://nodejs.org) v18+ and at least one of: Claude Code (CLI or Desktop), Cursor, or Codex.
-
-**Codex users:** use this HTTPS URL when adding the plugin:
-
-```text
-https://github.com/suntay44/web-to-mobile-magic-plugin
-```
-
-Do not use the SSH URL unless your machine already has GitHub SSH keys configured.
 
 ```bash
 git clone https://github.com/suntay44/web-to-mobile-magic-plugin
@@ -202,15 +179,16 @@ cd web-to-mobile-magic-plugin
 node scripts/install.mjs
 ```
 
-Symlinks all commands to `~/.claude/commands/` and all skills to `~/.claude/skills/`. Restart Claude Code after running. To uninstall: `node scripts/install.mjs --unlink`
+This symlinks commands to `~/.claude/commands/` and skills to `~/.claude/skills/`. Restart Claude Code after running.
 
-To update an existing WebToMobile install:
+Useful installer commands:
 
-```bash
-node scripts/install.mjs --update
-```
-
-For local edits or manual `git pull`, use `node scripts/install.mjs --refresh`. Refresh only replaces WebToMobile-owned symlinks and skips user-owned files with the same names.
+| Command | Use |
+|---------|-----|
+| `node scripts/install.mjs` | First install |
+| `node scripts/install.mjs --update` | Pull latest release and refresh installed links |
+| `node scripts/install.mjs --refresh` | Refresh local edits or a manual `git pull` |
+| `node scripts/install.mjs --unlink` | Remove WebToMobile-owned links |
 
 **Project-level install** (commands available in this project only):
 
@@ -220,24 +198,13 @@ cp commands/* .claude/commands/
 cp -r skills/. .claude/skills/
 ```
 
-Once installed, these slash commands are available in both the CLI and Desktop App:
-
-| Command | Trigger |
-|---------|---------|
-| `/web-to-mobile` | Type in chat |
-| `/mobile-resume` | Type in chat |
-| `/mobile-scan` | Type in chat |
-| `/mobile-review` | Type in chat |
-| `/mobile-audit` | Type in chat |
-| `/mobile-qa` | Type in chat |
-
-Each command works with or without the Skill tool. If the Skill tool is unavailable, the command reads its matching skill file directly from `skills/` or `~/.claude/skills/`.
+After install, type any command from the [Commands](#commands) table in Claude Code. If the Skill tool is unavailable, each command can read its matching `SKILL.md` directly from `skills/` or `~/.claude/skills/`.
 
 ### Cursor
 
-Cursor does not yet have a native slash command system equivalent to Claude Code's. To use these commands in Cursor:
+Cursor does not yet have a native slash command system equivalent to Claude Code's.
 
-1. Copy `commands/*.md` into `.cursor/rules/` in your project — Cursor loads them as AI context rules.
+1. Copy `commands/*.md` into `.cursor/rules/` in your project.
 2. The `skills/` directory should be in your workspace so the AI can read skill files when referenced.
 
 The `.cursor-plugin/plugin.json` manifest is ready for when Cursor's plugin API adds slash command support.
@@ -250,7 +217,7 @@ In Codex, go to **Settings → Plugins → Add Plugin** and point it to this rep
 https://github.com/suntay44/web-to-mobile-magic-plugin
 ```
 
-Do not use the SSH form (`git@github.com:suntay44/web-to-mobile-magic-plugin.git`) unless your machine already has GitHub SSH keys configured. Codex will read the manifest at:
+Do not use the SSH form (`git@github.com:suntay44/web-to-mobile-magic-plugin.git`) unless your machine already has GitHub SSH keys configured. Codex reads:
 
 ```
 .codex-plugin/plugin.json
@@ -266,7 +233,7 @@ Use the mobile-resume skill on ./my-unfinished-app.
 
 Some Codex surfaces may expose skill shortcuts or default prompts, but exact invocation depends on the Codex interface.
 
-If you see `Permission denied (publickey)` during plugin install, Codex is trying to clone with SSH. Retry with the HTTPS URL above.
+If you see `Permission denied (publickey)`, Codex is trying to clone with SSH. Retry with the HTTPS URL above.
 
 ---
 
@@ -274,19 +241,11 @@ If you see `Permission denied (publickey)` during plugin install, Codex is tryin
 
 ### Codex: `Permission denied (publickey)`
 
-This means Codex tried to clone the plugin with SSH:
-
-```text
-git@github.com:suntay44/web-to-mobile-magic-plugin.git
-```
-
-SSH requires GitHub SSH keys on the user's machine. Use the HTTPS URL instead:
+Use HTTPS unless your machine already has GitHub SSH keys configured:
 
 ```text
 https://github.com/suntay44/web-to-mobile-magic-plugin
 ```
-
-Then retry adding the plugin in Codex.
 
 ---
 
@@ -337,6 +296,7 @@ web-to-mobile/
 │   ├── fixtures/partial-expo-app/
 │   ├── pressure-scenarios.md
 │   └── validate-structure.mjs
+├── roadmap/                  # Maintainer release checklists and implementation briefs
 ├── .claude-plugin/plugin.json
 ├── .cursor-plugin/plugin.json
 ├── .codex-plugin/plugin.json

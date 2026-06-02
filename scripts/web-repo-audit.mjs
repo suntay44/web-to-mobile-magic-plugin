@@ -8,6 +8,7 @@ const routeRoots = ["app", "pages", "src/app", "src/pages", "routes", "src/route
 const apiRouteRoots = ["app/api", "src/app/api", "pages/api", "src/pages/api"];
 const serverPatterns = [
   ["server-actions", /["']use server["']/g],
+  ["use-client-directive", /["']use client["']/g],
   ["getServerSideProps", /\bgetServerSideProps\b/g],
   ["getStaticProps", /\bgetStaticProps\b/g],
   ["trpc-router", /createTRPCRouter|initTRPC/g],
@@ -30,6 +31,7 @@ const routePatterns = [
   ["file-route-link", /\bto=["'`]([^"'`]+)["'`]/g],
   ["href-route", /\bhref=["'`](\/[^"'`#?]+)["'`]/g]
 ];
+const nextAppRouteRoots = ["app", "src/app"];
 const dependencyGroups = {
   auth: ["@clerk/nextjs", "@clerk/clerk-react", "next-auth", "@auth/core", "@supabase/supabase-js", "firebase", "aws-amplify", "lucia", "better-auth"],
   api: ["@tanstack/react-query", "swr", "axios", "graphql", "@apollo/client", "urql", "@trpc/client", "@trpc/react-query", "ky"],
@@ -148,6 +150,29 @@ for (const [name, label] of [
   if (allDeps[name]) frameworks.push(label);
 }
 
+let nextjsRouter = null;
+if (allDeps["next"]) {
+  const hasAppDir = existsSync(join(root, "app")) || existsSync(join(root, "src/app"));
+  const hasPagesDir = existsSync(join(root, "pages")) || existsSync(join(root, "src/pages"));
+  nextjsRouter = hasAppDir && !hasPagesDir
+    ? "app-router"
+    : hasPagesDir && !hasAppDir
+      ? "pages-router"
+      : hasAppDir && hasPagesDir
+        ? "app-and-pages-mixed"
+        : "unknown";
+}
+
+let vueVersion = null;
+if (allDeps["vue"]) {
+  const vueVer = allDeps["vue"];
+  vueVersion = vueVer && (vueVer.startsWith("3") || vueVer.startsWith("^3") || vueVer.startsWith("~3"))
+    ? "vue3"
+    : vueVer && (vueVer.startsWith("2") || vueVer.startsWith("^2") || vueVer.startsWith("~2"))
+      ? "vue2"
+      : "unknown";
+}
+
 // Early disqualification: detect inputs that are already mobile or have no
 // frontend to port, so the audit skill can stop and redirect immediately.
 const backendOnlyMarkers = ["express", "fastify", "koa", "hapi", "@nestjs/core", "nestjs", "django", "flask", "rails"];
@@ -223,6 +248,26 @@ const interestingFiles = [
   "app.config.ts"
 ].filter((file) => existsSync(join(root, file)));
 
+const envVarNames = [];
+for (const envFile of [".env.example", ".env.local", ".env"]) {
+  const envPath = join(root, envFile);
+  if (!existsSync(envPath)) continue;
+  try {
+    const lines = readFileSync(envPath, "utf8").split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const name = trimmed.split("=")[0].trim();
+      if (name && /^[A-Z_][A-Z0-9_]*$/.test(name) && !envVarNames.includes(name)) {
+        envVarNames.push(name);
+      }
+    }
+  } catch {
+    // Skip unreadable env files.
+  }
+  break;
+}
+
 const routeCount = routes.length;
 const routeConfidence = routeCount > 0
   ? "detected-from-files"
@@ -243,6 +288,7 @@ for (const apiRoot of apiRouteRoots) {
 }
 
 const serverSignals = [];
+let hasNextAppServerComponent = false;
 for (const file of sourceFiles) {
   let text = "";
   try {
@@ -250,9 +296,24 @@ for (const file of sourceFiles) {
   } catch {
     continue;
   }
+  const isNextAppFile = Boolean(
+    allDeps["next"] &&
+    nextjsRouter?.includes("app") &&
+    nextAppRouteRoots.some((routeRoot) => {
+      const relativePath = relative(join(root, routeRoot), file);
+      return relativePath && !relativePath.startsWith("..") && !relativePath.startsWith("/");
+    })
+  );
+  if (isNextAppFile && !/["']use client["']/.test(text)) {
+    hasNextAppServerComponent = true;
+  }
   for (const [name, pattern] of serverPatterns) {
+    pattern.lastIndex = 0;
     if (!serverSignals.includes(name) && pattern.test(text)) serverSignals.push(name);
   }
+}
+if (hasNextAppServerComponent && !serverSignals.includes("server-components")) {
+  serverSignals.push("server-components");
 }
 
 const serverCoupled =
@@ -272,12 +333,20 @@ if (dependencyMatches.api.length) mobileRisks.push("api-data-layer-port");
 if (dependencyMatches.styling.includes("tailwindcss")) mobileRisks.push("web-styling-port");
 if (dependencyMatches.ui.length) mobileRisks.push("dom-ui-component-rewrite");
 if (renderingModel === "server-coupled") mobileRisks.push("backend-not-portable-needs-api");
+// Server components are not a hard "server-coupled" signal on their own (some only
+// render static JSX), but App Router apps that fetch data in server components have
+// no client API for the mobile app to call. Flag it for review rather than asserting it.
+if (renderingModel !== "server-coupled" && serverSignals.includes("server-components")) {
+  mobileRisks.push("server-component-data-fetching-review");
+}
 
 console.log(JSON.stringify({
   root,
   packageManager,
   scripts: packageJson?.scripts || {},
   frameworks,
+  nextjsRouter,
+  vueVersion,
   dependencyMatches,
   dependencyNames: Object.keys(allDeps).sort(),
   sourceFilesScanned: sourceFiles.length,
@@ -289,5 +358,6 @@ console.log(JSON.stringify({
   serverSignals,
   browserApiUsage,
   mobileRisks,
-  interestingFiles
+  interestingFiles,
+  envVarNames
 }, null, 2));

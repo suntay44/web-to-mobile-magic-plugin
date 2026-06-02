@@ -11,7 +11,7 @@
  *   node scripts/install.mjs --unlink  # remove WebToMobile-owned symlinks
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readlinkSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { symlink, copyFile, cp } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { homedir, platform } from "node:os";
@@ -64,6 +64,15 @@ function runGit(args, options = {}) {
   });
 }
 
+function readPluginVersion() {
+  try {
+    const manifest = JSON.parse(readFileSync(join(root, ".codex-plugin", "plugin.json"), "utf8"));
+    return manifest.version || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 function updateRepo() {
   try {
     runGit(["rev-parse", "--is-inside-work-tree"]);
@@ -80,10 +89,16 @@ function updateRepo() {
     process.exit(1);
   }
 
+  const versionBefore = readPluginVersion();
   console.log("Updating local repo from GitHub...");
   try {
     execFileSync("git", ["-C", root, "pull", "--ff-only"], { stdio: "inherit" });
-    ok("Repository updated");
+    const versionAfter = readPluginVersion();
+    if (versionBefore !== versionAfter) {
+      ok(`Updated ${versionBefore} -> ${versionAfter}`);
+    } else {
+      ok(`Already at latest (${versionAfter})`);
+    }
   } catch {
     warn("git pull --ff-only failed. Resolve the git issue manually, then run: node scripts/install.mjs --refresh");
     process.exit(1);

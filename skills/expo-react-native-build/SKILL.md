@@ -36,6 +36,7 @@ If a required value is missing, add it to the plan's Unknowns/Blockers section a
 - Prefer Expo React Native unless the approved plan selected Swift/SwiftUI.
 - Reuse TypeScript types, API clients, validation schemas, state patterns, assets, and non-DOM business logic where practical.
 - Rewrite DOM components, CSS-dependent UI, browser storage, cookies, and OAuth redirects for mobile.
+- When replacing a web dependency, consult `references/dependency-substitutions.md` for known swaps, difficulty rating, and notes. Do not guess if the package is listed.
 - Update checklist items from `- [ ]` to `- [x]` as they are completed.
 - Add a short implementation note in the plan if reality differs from the original plan.
 

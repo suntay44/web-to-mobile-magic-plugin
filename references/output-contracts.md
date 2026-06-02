@@ -2,6 +2,8 @@
 
 Shared behavioral rules for all WebToMobile skills.
 
+> *Audience: the AI agent. Skills load these rules during a run. You only need to read this if you are customizing the plugin.*
+
 ## Scope Boundaries — Helper, Not Magician
 
 WebToMobile is a **skill/plugin that runs inside an AI coding agent**. It audits, plans, implements, and verifies a website-to-mobile migration. Stay inside this line.

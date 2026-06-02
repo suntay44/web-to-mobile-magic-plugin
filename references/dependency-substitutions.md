@@ -2,6 +2,8 @@
 
 Web → mobile equivalents for common packages. Used by `web-to-mobile-audit` and `mobile-migration-plan` when building the Implementation Checklist.
 
+> *Audience: the AI agent. This is a lookup table the agent consults during planning and building. Handy as a reference for humans too.*
+
 Difficulty: **drop-in** (works unchanged or near-unchanged) · **config** (works with setup changes) · **rewrite** (API differs significantly)
 
 ---
