@@ -2,7 +2,10 @@
 
 <br />
 
-<img width="2172" height="724" alt="Banner" src="https://github.com/user-attachments/assets/aba6cdb2-4ab5-4aa6-9508-974616bb8d12" />
+<img width="1920" height="600" alt="New Project" src="https://github.com/user-attachments/assets/13ad5b52-bdd9-4ad8-8568-4e542d50074e" />
+
+
+
 
 ### Open-Source AI Skills & Plugin for Coding Agents
 ### ⭐ Stars are appreciated!
