@@ -44,6 +44,8 @@ const requiredFiles = [
   "tests/fixtures/next-app-router/package.json",
   "tests/fixtures/next-app-router/app/page.tsx",
   "tests/fixtures/next-app-router/app/dashboard/page.tsx",
+  "tests/fixtures/next-app-router-data/package.json",
+  "tests/fixtures/next-app-router-data/app/profile/page.tsx",
   "tests/fixtures/partial-expo-app/package.json",
   "tests/fixtures/partial-expo-app/app.json",
   "tests/fixtures/partial-expo-app/src/navigation/AppNavigator.tsx",
@@ -227,7 +229,19 @@ assert(nextAppAudit.frameworks.includes("Next.js"), "Next fixture audit must det
 assert(nextAppAudit.nextjsRouter === "app-router", "Next fixture audit must detect App Router");
 assert(nextAppAudit.serverSignals.includes("use-client-directive"), "Next fixture audit must detect use client directives");
 assert(nextAppAudit.serverSignals.includes("server-components"), "Next fixture audit must detect server components");
-assert(nextAppAudit.mobileRisks.includes("server-component-data-fetching-review"), "Next fixture audit must flag server components for API review when not server-coupled");
+assert(!nextAppAudit.serverSignals.includes("server-component-data-access"), "Static Next fixture must not report server component data access");
+assert(!nextAppAudit.mobileRisks.includes("server-component-data-fetching-review"), "Static Next fixture must not flag server component data review");
+
+const nextAppDataAudit = JSON.parse(execFileSync(
+  "node",
+  ["scripts/web-repo-audit.mjs", "tests/fixtures/next-app-router-data"],
+  { cwd: root, encoding: "utf8" }
+));
+
+assert(nextAppDataAudit.nextjsRouter === "app-router", "Next data fixture audit must detect App Router");
+assert(nextAppDataAudit.serverSignals.includes("server-components"), "Next data fixture audit must detect server components");
+assert(nextAppDataAudit.serverSignals.includes("server-component-data-access"), "Next data fixture audit must detect server component data access");
+assert(nextAppDataAudit.mobileRisks.includes("server-component-data-fetching-review"), "Next data fixture audit must flag server component data review");
 
 const skill = read("skills/web-to-mobile/SKILL.md");
 

@@ -32,6 +32,17 @@ const routePatterns = [
   ["href-route", /\bhref=["'`](\/[^"'`#?]+)["'`]/g]
 ];
 const nextAppRouteRoots = ["app", "src/app"];
+const nextAppServerDataPatterns = [
+  /\bawait\s+fetch\s*\(/,
+  /\bfetch\s*\(/,
+  /\bcookies\s*\(/,
+  /\bheaders\s*\(/,
+  /\bgetServerSession\s*\(/,
+  /\bprisma\./,
+  /\bdrizzle\(/,
+  /\bcreateServerClient\s*\(/,
+  /\bprocess\.env\./,
+];
 const dependencyGroups = {
   auth: ["@clerk/nextjs", "@clerk/clerk-react", "next-auth", "@auth/core", "@supabase/supabase-js", "firebase", "aws-amplify", "lucia", "better-auth"],
   api: ["@tanstack/react-query", "swr", "axios", "graphql", "@apollo/client", "urql", "@trpc/client", "@trpc/react-query", "ky"],
@@ -289,6 +300,7 @@ for (const apiRoot of apiRouteRoots) {
 
 const serverSignals = [];
 let hasNextAppServerComponent = false;
+let hasNextAppServerDataAccess = false;
 for (const file of sourceFiles) {
   let text = "";
   try {
@@ -306,6 +318,9 @@ for (const file of sourceFiles) {
   );
   if (isNextAppFile && !/["']use client["']/.test(text)) {
     hasNextAppServerComponent = true;
+    if (nextAppServerDataPatterns.some((pattern) => pattern.test(text))) {
+      hasNextAppServerDataAccess = true;
+    }
   }
   for (const [name, pattern] of serverPatterns) {
     pattern.lastIndex = 0;
@@ -314,6 +329,9 @@ for (const file of sourceFiles) {
 }
 if (hasNextAppServerComponent && !serverSignals.includes("server-components")) {
   serverSignals.push("server-components");
+}
+if (hasNextAppServerDataAccess && !serverSignals.includes("server-component-data-access")) {
+  serverSignals.push("server-component-data-access");
 }
 
 const serverCoupled =
@@ -333,10 +351,9 @@ if (dependencyMatches.api.length) mobileRisks.push("api-data-layer-port");
 if (dependencyMatches.styling.includes("tailwindcss")) mobileRisks.push("web-styling-port");
 if (dependencyMatches.ui.length) mobileRisks.push("dom-ui-component-rewrite");
 if (renderingModel === "server-coupled") mobileRisks.push("backend-not-portable-needs-api");
-// Server components are not a hard "server-coupled" signal on their own (some only
-// render static JSX), but App Router apps that fetch data in server components have
-// no client API for the mobile app to call. Flag it for review rather than asserting it.
-if (renderingModel !== "server-coupled" && serverSignals.includes("server-components")) {
+// Server components are not a hard "server-coupled" signal on their own. Only flag
+// App Router API review when the server component appears to access server-side data.
+if (renderingModel !== "server-coupled" && serverSignals.includes("server-component-data-access")) {
   mobileRisks.push("server-component-data-fetching-review");
 }
 

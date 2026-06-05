@@ -75,6 +75,7 @@ Going from a website to a mobile app usually means a lot of manual back-and-fort
 
 - **One command instead of many prompts.** You point it at your source once; it does the audit instead of you re-explaining the project each turn.
 - **Reusable vs. rewrite is decided for you.** The audit separates code you can port directly from code that needs a mobile rewrite, so you are not guessing.
+- **Web routes become a mobile navigation map.** The plan maps routes like `/dashboard`, `/settings`, or `/products/:id` into reviewed mobile destinations such as tabs, stacks, detail screens, auth flows, or modals.
 - **Risks surface before you build.** Auth, API, storage, browser-only APIs, routing, and server-coupling issues are flagged in the plan — not discovered halfway through.
 - **The plan is your memory.** Progress lives in a Markdown checklist you can read, resume, and review — not buried in chat history.
 - **Checks happen before "done."** Verification is part of the workflow, not something you have to remember to ask for.

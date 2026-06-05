@@ -9,3 +9,5 @@ build/
 .turbo/
 .cache/
 .claude/
+graphify-out/
+.graphify_python
