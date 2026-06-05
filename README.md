@@ -2,7 +2,7 @@
 
 <br />
 
-<img width="1920" height="600" alt="New Project" src="https://github.com/user-attachments/assets/13ad5b52-bdd9-4ad8-8568-4e542d50074e" />
+<img width="1920" height="600" alt="WebToMobile — open-source AI plugin that converts any website or web app into a native Expo React Native mobile app, for Claude Code, Cursor, and Codex" src="https://github.com/user-attachments/assets/13ad5b52-bdd9-4ad8-8568-4e542d50074e" />
 
 
 
@@ -29,7 +29,9 @@ Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 
 ## What It Does
 
-WebToMobile gives AI coding agents six commands for website-to-mobile work:
+**WebToMobile is an open-source AI plugin and skill set that converts a website or web app into a native mobile app** (Expo React Native) — directly inside Claude Code, Cursor, or Codex. Point it at a URL, a GitHub repo, or a local web project, and it audits the source, writes an approval-gated migration plan, builds the mobile app, and verifies the result.
+
+It gives AI coding agents six commands for website-to-mobile work:
 
 - Convert a website or web repo into an Expo React Native migration plan
 - Finish an unfinished mobile app
@@ -316,6 +318,38 @@ node tests/validate-structure.mjs
 ```
 
 Checks manifests, command wiring, skill frontmatter, token-size limits, required workflow gates, audit script correctness against fixtures, and pressure-test scenario coverage.
+
+---
+
+## FAQ
+
+### How do I convert a website into a mobile app?
+
+Install WebToMobile in Claude Code, Cursor, or Codex, then run `/web-to-mobile` with your website URL, GitHub repo, or local project path. It audits the source, writes a migration plan you approve, builds an Expo React Native app, and verifies it.
+
+### Can I turn a React, Next.js, or Vite web app into a React Native app?
+
+Yes. When you give WebToMobile your repository or local source, it reads your actual code — reusing TypeScript types, API clients, validation schemas, and business logic, while flagging DOM components, CSS, and browser APIs that need a mobile rewrite. Next.js App Router, Pages Router, Remix, Vite, Nuxt, SvelteKit, and Astro are all recognized.
+
+### Can it convert a website from just a URL?
+
+A URL gives you a UI/UX-focused result only — layout, navigation, and visual direction inferred from public pages. It cannot see code, state, APIs, or anything behind a login. For a faithful port, provide the GitHub repo or local source.
+
+### Does it work with Claude Code, Cursor, and Codex?
+
+Yes. It ships as a plugin/skill for all three. Claude Code uses slash commands like `/web-to-mobile`; Codex and Cursor invoke the same skills through their own interfaces.
+
+### Is WebToMobile free and open source?
+
+Yes. It is MIT-licensed and free to use, modify, and distribute.
+
+### Does it build my backend or submit to the App Store?
+
+No. WebToMobile is a helper, not a magician. It reuses or consumes your existing API, lists release steps, and hands store submission to you. It never generates a backend, provisions infrastructure, or handles secrets.
+
+### What does it target — iOS, Android, or both?
+
+Both. The default output is Expo React Native, which builds for iOS and Android from one codebase. Swift/SwiftUI is available on request for iOS-only native work.
 
 ---
 

@@ -10,11 +10,24 @@
   "license": "MIT",
   "keywords": [
     "web-to-mobile",
+    "website-to-app",
+    "convert-website-to-mobile-app",
     "expo",
+    "expo-react-native",
     "react-native",
-    "migration",
+    "mobile-app",
+    "mobile-app-development",
+    "app-migration",
+    "claude-code",
+    "cursor",
+    "codex",
+    "ai-agent",
+    "ai-coding-assistant",
+    "ai-plugin",
     "skills",
-    "mobile-apps"
+    "nextjs",
+    "ios",
+    "android"
   ],
   "skills": "./skills/",
   "commands": "./commands/"
