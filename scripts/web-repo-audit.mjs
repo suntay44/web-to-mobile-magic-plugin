@@ -217,26 +217,36 @@ for (const [group, names] of Object.entries(dependencyGroups)) {
 
 const sourceFiles = walk(root, []);
 
-const routes = [];
-const seenRoutes = new Set();
+const routeMap = new Map();
+function addRoute(route, file, source) {
+  if (!routeMap.has(route)) {
+    routeMap.set(route, {
+      route,
+      file,
+      source,
+      files: [],
+      sources: []
+    });
+  }
+  const entry = routeMap.get(route);
+  if (file && !entry.files.includes(file)) entry.files.push(file);
+  if (source && !entry.sources.includes(source)) entry.sources.push(source);
+}
+
 for (const routeRoot of routeRoots) {
   const absolute = join(root, routeRoot);
   if (!existsSync(absolute)) continue;
   for (const file of walk(absolute, [])) {
     const route = routeFromFile(absolute, file);
-    const key = `${route}:${file}`;
-    if (seenRoutes.has(key)) continue;
-    seenRoutes.add(key);
-    routes.push({ route, file: relative(root, file), source: "file-system" });
+    addRoute(route, relative(root, file), "file-system");
   }
 }
 
 for (const route of scanInlineRoutes(sourceFiles)) {
-  const key = `${route.route}:${route.file}:${route.source}`;
-  if (seenRoutes.has(key)) continue;
-  seenRoutes.add(key);
-  routes.push(route);
+  addRoute(route.route, route.file, route.source);
 }
+
+const routes = [...routeMap.values()].slice(0, 80);
 
 const packageManager = existsSync(join(root, "pnpm-lock.yaml"))
   ? "pnpm"

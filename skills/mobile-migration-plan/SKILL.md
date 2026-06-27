@@ -30,9 +30,13 @@ Use the current local date. If that filename exists, append a short suffix such 
 
 ## Required Sections
 
-Follow all sections in `references/plan-template.md` in order, including Capabilities & Limits, API Needs, and Human Sign-Off Required. The plan must cover Reusable Code, Rewrite-Required Code, Unknowns And Blockers, and the Implementation Checklist at minimum.
+Follow all sections in `references/plan-template.md` in order, including Capabilities & Limits, Migration Fit Verdict, API Needs, and Human Sign-Off Required. The plan must cover Reusable Code, Rewrite-Required Code, Native Feature Gaps, Unknowns And Blockers, and the Implementation Checklist at minimum.
+
+The Migration Fit Verdict must state whether Expo React Native, Capacitor, PWA/PWABuilder, Stay Web, or Swift/Native is the recommended path. Do not force a native migration when the audit shows a wrapper or PWA is enough.
 
 Before writing the checklist, consult `references/framework-migration-notes.md` for the detected framework's reusable vs rewrite-required split. Consult `references/dependency-substitutions.md` for each detected dependency's mobile equivalent and difficulty rating. Use these to populate Reusable Code, Rewrite-Required Code, and Unknowns sections accurately.
+
+The Route To Mobile Navigation Map must be a table with Web Route, Mobile Destination, Navigator Pattern, Reason, and Confidence. Use tabs for primary areas, stacks for drill-down/detail routes, auth flows for login/signup, modals for focused flows, and explicit deferrals for routes that should not be native in v1.
 
 The Implementation Checklist must use Markdown checkboxes with specific file paths, source → target mappings, verification commands, and a confidence label (`[from-code]`, `[inferred]`, `[assumption]`) per item. Example: `- [ ] Port API client from \`src/api.ts\` to \`mobile/api.ts\` — \`[from-code]\`.`
 

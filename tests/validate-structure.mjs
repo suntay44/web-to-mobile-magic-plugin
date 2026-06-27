@@ -187,6 +187,7 @@ for (const phrase of [
   "Capability Downgrade",
   "Confidence Labels",
   "API Needs",
+  "Migration Fit Verdict",
   "Evidence-Backed Verdicts",
   "Human Sign-Off Required"
 ]) {
@@ -206,6 +207,8 @@ assert(fixtureAudit.dependencyMatches.auth.includes("@supabase/supabase-js"), "F
 assert(fixtureAudit.dependencyMatches.api.includes("axios"), "Fixture audit must detect API/data libraries");
 assert(fixtureAudit.dependencyMatches.styling.includes("tailwindcss"), "Fixture audit must detect styling libraries");
 assert(fixtureAudit.routes.some((route) => route.route === "/dashboard"), "Fixture audit must detect inline routes");
+assert(new Set(fixtureAudit.routes.map((route) => route.route)).size === fixtureAudit.routes.length, "Fixture audit must deduplicate routes by path");
+assert(fixtureAudit.routes.find((route) => route.route === "/dashboard")?.sources.includes("href-route"), "Fixture audit must retain merged route sources");
 assert(fixtureAudit.browserApiUsage.window?.length, "Fixture audit must detect window usage");
 assert(fixtureAudit.browserApiUsage.localStorage?.length, "Fixture audit must detect localStorage usage");
 assert(fixtureAudit.browserApiUsage.cookie?.length, "Fixture audit must detect cookie usage");
@@ -292,6 +295,9 @@ const skillChecks = {
     "name: mobile-migration-plan",
     "docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md",
     "references/plan-template.md",
+    "Migration Fit Verdict",
+    "PWA/PWABuilder",
+    "Route To Mobile Navigation Map",
     "framework-migration-notes.md",
     "dependency-substitutions.md",
     "ui-ux-spec.md",
@@ -340,6 +346,22 @@ assert(mobileAudit.screens.some((s) => s.status === "partial"), "Mobile fixture 
 assert(mobileAudit.incompleteMarkers.todo?.length > 0, "Mobile fixture audit must detect TODO markers");
 assert(mobileAudit.completionRisks.includes("partial-screens"), "Mobile fixture audit must flag partial-screens risk");
 assert(typeof mobileAudit.brokenScreenCount === "number", "Mobile fixture audit must include brokenScreenCount field");
+
+const sampleWebPlan = read("examples/sample-web-to-mobile-plan.md");
+for (const phrase of [
+  "## Capabilities & Limits",
+  "## Migration Fit Verdict",
+  "Navigator Pattern",
+  "## API Needs",
+  "## Reusable Code",
+  "## Rewrite-Required Code",
+  "Suggested Native/Expo API",
+  "## Unknowns And Blockers",
+  "[from-code]",
+  "## Human Sign-Off Required"
+]) {
+  assert(sampleWebPlan.includes(phrase), `Sample web-to-mobile plan missing phrase: ${phrase}`);
+}
 
 const paritySkillChecks = {
   "skills/mobile-parity-check/SKILL.md": [

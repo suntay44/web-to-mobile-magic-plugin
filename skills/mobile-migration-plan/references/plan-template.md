@@ -8,7 +8,15 @@ State the input tier (URL → UI/UX only, or repo/local → full scope) and what
 
 ## Audit Findings
 
+## Migration Fit Verdict
+
+Recommended path: Expo React Native, Capacitor, PWA/PWABuilder, Stay Web, or Swift/Native.
+
+Include the reason, app-store need, native API need, whether a web wrapper is enough, source reuse potential, and migration risk.
+
 ## Route To Mobile Navigation Map
+
+Use a table with: Web Route, Mobile Destination, Navigator Pattern, Reason, Confidence.
 
 ## Target Mobile Architecture
 
@@ -21,6 +29,8 @@ Endpoints the mobile app will call, with mobile-auth/CORS/session flags. If no c
 ## Rewrite-Required Code
 
 ## Native Feature Gaps
+
+Use a table with: Web Signal, Mobile Need, Suggested Native/Expo API, Status.
 
 ## Unknowns And Blockers
 

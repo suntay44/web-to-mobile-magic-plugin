@@ -48,6 +48,10 @@ Tag planned and reported items so facts and guesses are never voiced in the same
 
 Mobile apps need an API to talk to. When the audit detects server-coupled rendering (server actions, SSR data loaders, internal API routes, tRPC), the plan must include an **API Needs** list: the endpoints the mobile app will call, plus flags for mobile auth, CORS, and session handling. If no client-callable API exists, say so — that is a blocker the human must resolve, not something we invent.
 
+## Migration Fit Verdict
+
+Every web-to-mobile plan must state the recommended path before implementation: **Expo React Native**, **Capacitor**, **PWA/PWABuilder**, **Stay Web**, or **Swift/Native**. This keeps the workflow honest when a native migration is not justified. Include the reason, app-store need, native API need, whether a web wrapper is enough, source reuse potential, and migration risk.
+
 ## Completion States
 
 - **implemented** — renders real data, no stubs, no suppressed errors.
