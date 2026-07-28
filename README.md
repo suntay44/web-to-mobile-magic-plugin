@@ -1,3 +1,5 @@
+# WebToMobile
+
 <div align="center">
 
 <br />
@@ -16,6 +18,8 @@ Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 <br />
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/suntay44/web-to-mobile-magic-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/suntay44/web-to-mobile-magic-plugin/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/suntay44/web-to-mobile-magic-plugin)](https://github.com/suntay44/web-to-mobile-magic-plugin/releases)
 [![Works with Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-darkorange)](https://claude.ai/code)
 [![Works with Codex](https://img.shields.io/badge/Codex-Plugin-blue)](https://chatgpt.com/codex)
 [![Works with Cursor](https://img.shields.io/badge/Cursor-Plugin-black)](https://cursor.sh)
@@ -29,7 +33,11 @@ Plan-first. Approval-gated. Works with Claude Code, Cursor, and Codex.
 
 ## What It Does
 
-**WebToMobile is an open-source AI plugin and skill set that converts a website or web app into a native mobile app** (Expo React Native) — directly inside Claude Code, Cursor, or Codex. Point it at a URL, a GitHub repo, or a local web project, and it audits the source, writes an approval-gated migration plan, builds the mobile app, and verifies the result.
+**WebToMobile is an open-source AI plugin and skill set for planning and
+implementing website-to-mobile migrations with Expo React Native.** It runs
+inside Claude Code, Cursor, or Codex. Point it at a URL, a GitHub repository, or
+a local web project; it audits the source, writes an approval-gated migration
+plan, implements approved Expo work, and records verification evidence.
 
 It gives AI coding agents six commands for website-to-mobile work:
 
@@ -170,7 +178,8 @@ The Markdown plan acts as external memory between phases, so the agent does not 
 
 ## Install
 
-**Prerequisites:** [Node.js](https://nodejs.org) v18+ and at least one of: Claude Code (CLI or Desktop), Cursor, or Codex.
+**Prerequisites:** [Node.js](https://nodejs.org) v22 or v24 LTS and at least one
+of: Claude Code (CLI or Desktop), Cursor, or Codex.
 
 ```bash
 git clone https://github.com/suntay44/web-to-mobile-magic-plugin
@@ -185,7 +194,9 @@ cd web-to-mobile-magic-plugin
 node scripts/install.mjs
 ```
 
-This symlinks commands to `~/.claude/commands/` and skills to `~/.claude/skills/`. Restart Claude Code after running.
+This symlinks commands and skills on macOS/Linux. On Windows it creates
+ownership-marked copies so refresh and uninstall can distinguish plugin files
+from user-owned files. Restart Claude Code after running.
 
 Useful installer commands:
 
@@ -213,17 +224,20 @@ Cursor does not yet have a native slash command system equivalent to Claude Code
 1. Copy `commands/*.md` into `.cursor/rules/` in your project.
 2. The `skills/` directory should be in your workspace so the AI can read skill files when referenced.
 
-The `.cursor-plugin/plugin.json` manifest is ready for when Cursor's plugin API adds slash command support.
+The `.cursor-plugin/plugin.json` file supplies package metadata; today the
+included command files still need to be copied into project rules.
 
-### Codex
+### Codex and ChatGPT desktop
 
-In Codex, go to **Settings → Plugins → Add Plugin** and point it to this repository using the HTTPS URL:
+Add this repository as a plugin marketplace from the Codex CLI:
 
-```text
-https://github.com/suntay44/web-to-mobile-magic-plugin
+```bash
+codex plugin marketplace add suntay44/web-to-mobile-magic-plugin
 ```
 
-Do not use the SSH form (`git@github.com:suntay44/web-to-mobile-magic-plugin.git`) unless your machine already has GitHub SSH keys configured. Codex reads:
+Then browse the WebToMobile marketplace in ChatGPT desktop or Codex CLI and
+install the plugin. The repository includes
+`.agents/plugins/marketplace.json`, and Codex reads:
 
 ```
 .codex-plugin/plugin.json
@@ -237,21 +251,18 @@ Use the web-to-mobile skill on https://github.com/you/your-web-app.
 Use the mobile-resume skill on ./my-unfinished-app.
 ```
 
-Some Codex surfaces may expose skill shortcuts or default prompts, but exact invocation depends on the Codex interface.
-
-If you see `Permission denied (publickey)`, Codex is trying to clone with SSH. Retry with the HTTPS URL above.
+Plugins are available in ChatGPT desktop and Codex CLI; they are not currently
+available in the IDE extension. Exact skill shortcuts depend on the surface.
 
 ---
 
 ## Troubleshooting
 
-### Codex: `Permission denied (publickey)`
+### Codex marketplace does not appear
 
-Use HTTPS unless your machine already has GitHub SSH keys configured:
-
-```text
-https://github.com/suntay44/web-to-mobile-magic-plugin
-```
+Run `codex plugin marketplace list --json` and confirm
+`web-to-mobile-marketplace` is present. Upgrade the local marketplace snapshot
+with `codex plugin marketplace upgrade web-to-mobile-marketplace`.
 
 ---
 
@@ -259,7 +270,7 @@ https://github.com/suntay44/web-to-mobile-magic-plugin
 
 | Default | Alternate |
 |---------|-----------|
-| Expo React Native | Swift / SwiftUI (iOS-only, on request) |
+| Expo React Native implementation | Capacitor, PWA, Stay Web, or Swift/Native planning handoff |
 
 ---
 
@@ -277,7 +288,7 @@ web-to-mobile/
 ├── skills/
 │   ├── web-to-mobile/         # Orchestrator: web → mobile
 │   ├── web-to-mobile-audit/   # Inspect web source
-│   ├── mobile-migration-plan/ # Route map + checklist + approval
+│   ├── mobile-migration-plan/ # Route map + checklist + shared references
 │   ├── mobile-parity-check/   # Design + functional parity vs. web
 │   ├── mobile-resume/         # Orchestrator: resume unfinished app
 │   ├── mobile-app-audit/      # Inspect existing mobile app
@@ -286,10 +297,7 @@ web-to-mobile/
 │   ├── mobile-deep-review/    # Senior review (code-driven)
 │   ├── expo-react-native-build/# Build from approved checklist
 │   └── mobile-qa-release/     # Verify: perf, a11y, layout, release
-├── references/
-│   ├── output-contracts.md        # Shared behavioral rules for all skills
-│   ├── dependency-substitutions.md# Web → mobile dep swap map (drop-in/config/rewrite)
-│   └── framework-migration-notes.md# Per-framework reuse/rewrite guide
+├── references/                # Contributor links to packaged skill references
 ├── scripts/
 │   ├── web-repo-audit.mjs     # Summarizes a web project as JSON
 │   ├── mobile-app-audit.mjs   # Summarizes a mobile app as JSON
@@ -337,7 +345,9 @@ A URL gives you a UI/UX-focused result only — layout, navigation, and visual d
 
 ### Does it work with Claude Code, Cursor, and Codex?
 
-Yes. It ships as a plugin/skill for all three. Claude Code uses slash commands like `/web-to-mobile`; Codex and Cursor invoke the same skills through their own interfaces.
+Yes. It ships skill instructions for all three. Claude Code uses slash commands
+like `/web-to-mobile`; Codex CLI and ChatGPT desktop can install the packaged
+plugin; Cursor reads the included commands and skills as workspace rules.
 
 ### Is WebToMobile free and open source?
 
@@ -349,7 +359,10 @@ No. WebToMobile is a helper, not a magician. It reuses or consumes your existing
 
 ### What does it target — iOS, Android, or both?
 
-Both. The default output is Expo React Native, which builds for iOS and Android from one codebase. Swift/SwiftUI is available on request for iOS-only native work.
+The bundled build phase targets Expo React Native, which can build for iOS and
+Android from one codebase. The planning phase can recommend Capacitor, a PWA,
+staying on the web, or Swift/Native when that is a better fit, but those verdicts
+end with an explicit implementation handoff.
 
 ---
 

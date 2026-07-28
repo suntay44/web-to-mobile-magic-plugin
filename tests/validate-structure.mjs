@@ -1,8 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("..", import.meta.url).pathname;
+const root = fileURLToPath(new URL("..", import.meta.url));
+const expectedVersion = "0.3.0";
 
 function read(path) {
   return readFileSync(join(root, path), "utf8");
@@ -26,8 +28,16 @@ const requiredFiles = [
   "README.md",
   "LICENSE",
   ".codex-plugin/plugin.json",
+  ".codex-plugin/assets/icon.svg",
+  ".codex-plugin/assets/logo.svg",
+  ".agents/plugins/marketplace.json",
   ".claude-plugin/plugin.json",
   ".cursor-plugin/plugin.json",
+  "package.json",
+  "CHANGELOG.md",
+  "CONTRIBUTING.md",
+  "SECURITY.md",
+  "CITATION.cff",
   "commands/web-to-mobile.md",
   "commands/mobile-resume.md",
   "commands/mobile-audit.md",
@@ -36,6 +46,8 @@ const requiredFiles = [
   "commands/mobile-review.md",
   "scripts/web-repo-audit.mjs",
   "scripts/mobile-app-audit.mjs",
+  "skills/web-to-mobile-audit/scripts/web-repo-audit.mjs",
+  "skills/mobile-app-audit/scripts/mobile-app-audit.mjs",
   "scripts/install.mjs",
   "tests/fixtures/react-web/package.json",
   "tests/fixtures/react-web/.env.example",
@@ -44,6 +56,11 @@ const requiredFiles = [
   "tests/fixtures/next-app-router/package.json",
   "tests/fixtures/next-app-router/app/page.tsx",
   "tests/fixtures/next-app-router/app/dashboard/page.tsx",
+  "tests/fixtures/next-app-router/app/layout.tsx",
+  "tests/fixtures/next-app-router/app/loading.tsx",
+  "tests/fixtures/next-app-router/app/dashboard/Chart.tsx",
+  "tests/fixtures/next-app-router/app/api/health/route.ts",
+  "tests/fixtures/next-app-router/app/blog/[...slug]/page.tsx",
   "tests/fixtures/next-app-router-data/package.json",
   "tests/fixtures/next-app-router-data/app/profile/page.tsx",
   "tests/fixtures/partial-expo-app/package.json",
@@ -51,6 +68,7 @@ const requiredFiles = [
   "tests/fixtures/partial-expo-app/src/navigation/AppNavigator.tsx",
   "tests/fixtures/partial-expo-app/src/screens/HomeScreen.tsx",
   "tests/fixtures/partial-expo-app/src/screens/ProfileScreen.tsx",
+  "tests/fixtures/partial-expo-app/src/screens/LoginScreen.tsx",
   "skills/web-to-mobile/SKILL.md",
   "skills/web-to-mobile-audit/SKILL.md",
   "skills/mobile-migration-plan/SKILL.md",
@@ -63,6 +81,9 @@ const requiredFiles = [
   "skills/mobile-qa-scan/SKILL.md",
   "skills/mobile-deep-review/SKILL.md",
   "skills/mobile-migration-plan/references/plan-template.md",
+  "skills/mobile-migration-plan/references/output-contracts.md",
+  "skills/mobile-migration-plan/references/dependency-substitutions.md",
+  "skills/mobile-migration-plan/references/framework-migration-notes.md",
   "examples/sample-web-to-mobile-plan.md",
   "examples/sample-mobile-completion-plan.md",
   "references/output-contracts.md",
@@ -75,8 +96,11 @@ for (const file of requiredFiles) {
   assert(existsSync(join(root, file)), `Missing required file: ${file}`);
 }
 
+const ignoredWalkDirs = new Set([".git", "node_modules", "graphify-out", ".claude"]);
+
 function walk(dir, files = []) {
   for (const entry of readdirSync(join(root, dir))) {
+    if (ignoredWalkDirs.has(entry)) continue;
     const relative = join(dir, entry);
     const absolute = join(root, relative);
     if (statSync(absolute).isDirectory()) {
@@ -88,13 +112,24 @@ function walk(dir, files = []) {
   return files;
 }
 
-for (const file of walk(".")) {
-  assert(!file.endsWith(".DS_Store"), `Remove local metadata file: ${file}`);
+const trackedFiles = (() => {
+  try {
+    return execFileSync("git", ["ls-files"], { cwd: root, encoding: "utf8" })
+      .split("\n")
+      .filter(Boolean);
+  } catch {
+    return walk(".");
+  }
+})();
+for (const file of trackedFiles) {
+  assert(!file.endsWith(".DS_Store"), `Remove tracked local metadata file: ${file}`);
 }
 
 const codex = parseJson(".codex-plugin/plugin.json");
 const claude = parseJson(".claude-plugin/plugin.json");
 const cursor = parseJson(".cursor-plugin/plugin.json");
+const packageJson = parseJson("package.json");
+const marketplace = parseJson(".agents/plugins/marketplace.json");
 
 for (const [name, manifest] of [
   [".codex-plugin/plugin.json", codex],
@@ -102,7 +137,7 @@ for (const [name, manifest] of [
   [".cursor-plugin/plugin.json", cursor]
 ]) {
   assert(manifest.name === "web-to-mobile", `${name} must use name web-to-mobile`);
-  assert(manifest.version === "0.2.0", `${name} must use version 0.2.0`);
+  assert(manifest.version === expectedVersion, `${name} must use version ${expectedVersion}`);
   assert(manifest.skills === "./skills/", `${name} must point skills to ./skills/`);
   assert(manifest.license === "MIT", `${name} must use MIT license`);
   assert(!Object.prototype.hasOwnProperty.call(manifest, "cloneUrl"), `${name} must not use unsupported cloneUrl`);
@@ -110,8 +145,20 @@ for (const [name, manifest] of [
 
 assert(codex.interface?.displayName === "WebToMobile", "Codex manifest must include displayName");
 assert(Array.isArray(codex.interface?.defaultPrompt), "Codex manifest must include default prompts");
+assert(codex.interface?.shortDescription.length <= 30, "Codex shortDescription must fit final directory limits");
+assert(codex.interface?.category === "Developer Tools", "Codex category must be Developer Tools");
+assert(codex.interface?.supportURL?.endsWith("/issues"), "Codex manifest must include the support URL");
+assert(existsSync(join(root, ".codex-plugin", codex.interface?.composerIcon || "")), "Codex composerIcon must resolve");
+assert(existsSync(join(root, ".codex-plugin", codex.interface?.logo || "")), "Codex logo must resolve");
+assert(!codex.interface?.privacyPolicyURL, "Skills-only plugin must not claim GitHub's privacy policy as its own");
+assert(!codex.interface?.termsOfServiceURL, "Skills-only plugin must not claim GitHub's terms as its own");
 assert(claude.commands === "./commands/", "Claude manifest must expose commands");
 assert(cursor.commands === "./commands/", "Cursor manifest must expose commands");
+assert(packageJson.version === expectedVersion, "package.json version must match plugin manifests");
+assert(packageJson.engines?.node === ">=22", "package.json must require a maintained Node.js LTS baseline");
+assert(marketplace.plugins?.[0]?.name === "web-to-mobile", "Marketplace must list web-to-mobile");
+assert(marketplace.plugins?.[0]?.category === "Developer Tools", "Marketplace category must be Developer Tools");
+assert(marketplace.plugins?.[0]?.policy?.installation === "AVAILABLE", "Marketplace plugin must be available");
 
 const commandSkillMap = {
   "commands/web-to-mobile.md": "web-to-mobile",
@@ -155,6 +202,8 @@ assert(installer.includes("readPluginVersion"), "Installer update must display p
 assert(installer.includes("Already at latest"), "Installer update must explain no-op updates");
 assert(installer.includes("--refresh"), "Installer must support --refresh");
 assert(installer.includes("isOwnedSymlink"), "Installer refresh/unlink must guard user-owned files");
+assert(installer.includes("isOwnedCopy"), "Installer must track copied Windows installs");
+assert(installer.includes(".web-to-mobile-owned.json"), "Installer copies must use ownership markers");
 assert(!installer.includes("--force"), "Installer must not expose a broad --force mode");
 
 for (const manifestPath of [".codex-plugin/plugin.json", ".claude-plugin/plugin.json", ".cursor-plugin/plugin.json"]) {
@@ -163,7 +212,7 @@ for (const manifestPath of [".codex-plugin/plugin.json", ".claude-plugin/plugin.
   assert(!manifestText.includes("https://github.com/webtomobile/web-to-mobile"), `${manifestPath} must not use placeholder repo URLs`);
 }
 
-const auditScript = read("scripts/web-repo-audit.mjs");
+const auditScript = read("skills/web-to-mobile-audit/scripts/web-repo-audit.mjs");
 for (const phrase of [
   "dependencyMatches",
   "browserApiUsage",
@@ -180,7 +229,7 @@ for (const phrase of [
   assert(auditScript.includes(phrase), `Audit script missing ${phrase}`);
 }
 
-const contracts = read("references/output-contracts.md");
+const contracts = read("skills/mobile-migration-plan/references/output-contracts.md");
 for (const phrase of [
   "Scope Boundaries",
   "Capability Tiers",
@@ -234,6 +283,16 @@ assert(nextAppAudit.serverSignals.includes("use-client-directive"), "Next fixtur
 assert(nextAppAudit.serverSignals.includes("server-components"), "Next fixture audit must detect server components");
 assert(!nextAppAudit.serverSignals.includes("server-component-data-access"), "Static Next fixture must not report server component data access");
 assert(!nextAppAudit.mobileRisks.includes("server-component-data-fetching-review"), "Static Next fixture must not flag server component data review");
+assert(nextAppAudit.routes.some((route) => route.route === "/"), "Next fixture must detect the root page");
+assert(nextAppAudit.routes.some((route) => route.route === "/dashboard"), "Next fixture must detect dashboard page");
+assert(nextAppAudit.routes.some((route) => route.route === "/blog/:slug*"), "Next fixture must normalize catch-all routes");
+assert(!nextAppAudit.routes.some((route) => route.route === "/layout"), "Next fixture must not treat layout as a route");
+assert(!nextAppAudit.routes.some((route) => route.route === "/loading"), "Next fixture must not treat loading as a route");
+assert(!nextAppAudit.routes.some((route) => route.route.includes("Chart")), "Next fixture must not treat colocated components as routes");
+assert(!nextAppAudit.routes.some((route) => route.route.startsWith("/api")), "Next UI routes must exclude API handlers");
+assert(nextAppAudit.internalApiRoutes.includes("app/api/health/route.ts"), "Next fixture must list Route Handlers separately");
+assert(nextAppAudit.mobileRisks.includes("internal-api-mobile-compatibility-review"), "Next fixture must request mobile API compatibility review");
+assert(nextAppAudit.renderingModel !== "server-coupled", "A Route Handler alone must not make a Next app server-coupled");
 
 const nextAppDataAudit = JSON.parse(execFileSync(
   "node",
@@ -255,7 +314,7 @@ const requiredSkillPhrases = [
   "Do not generate or edit app code",
   "the user approved it",
   "Default to Expo React Native",
-  "Use Swift/SwiftUI only when",
+  "Recommend Swift/SwiftUI planning only when",
   "Use the Markdown plan as external memory",
   "mobile-parity-check"
 ];
@@ -275,12 +334,26 @@ for (const file of skillFiles) {
   assert(descriptionLine, `${file} missing description`);
   const description = descriptionLine.replace(/^description: /, "");
   assert(description.length <= 240, `${file} description is too long: ${description.length} chars`);
+
+  for (const match of body.matchAll(/`((?:\.\.\/|references\/)[^`]+\.(?:md|mjs))`/g)) {
+    const resource = resolve(dirname(join(root, file)), match[1]);
+    assert(existsSync(resource), `${file} references missing packaged resource: ${match[1]}`);
+  }
 }
+
+assert(
+  read("scripts/web-repo-audit.mjs").includes("../skills/web-to-mobile-audit/scripts/web-repo-audit.mjs"),
+  "Contributor web audit command must delegate to the packaged scanner"
+);
+assert(
+  read("scripts/mobile-app-audit.mjs").includes("../skills/mobile-app-audit/scripts/mobile-app-audit.mjs"),
+  "Contributor mobile audit command must delegate to the packaged scanner"
+);
 
 const skillChecks = {
   "skills/web-to-mobile-audit/SKILL.md": [
     "name: web-to-mobile-audit",
-    "node scripts/web-repo-audit.mjs",
+    "node <skill-dir>/scripts/web-repo-audit.mjs",
     "Framework and runtime",
     "route/page inventory",
     "Capability Tier",
@@ -289,7 +362,7 @@ const skillChecks = {
     "backend-only",
     "dependency-substitutions.md",
     "ui-ux-spec.md",
-    "End with a clear handoff to `mobile-migration-plan`"
+    "handoff to"
   ],
   "skills/mobile-migration-plan/SKILL.md": [
     "name: mobile-migration-plan",
@@ -302,6 +375,8 @@ const skillChecks = {
     "dependency-substitutions.md",
     "ui-ux-spec.md",
     "API Needs",
+    "update that file in place",
+    "The verdict controls the next phase",
     "[from-code]",
     "Reusable Code",
     "Rewrite-Required Code",
@@ -312,6 +387,7 @@ const skillChecks = {
   "skills/expo-react-native-build/SKILL.md": [
     "name: expo-react-native-build",
     "The user approved implementation",
+    "approved stack is Expo React Native",
     "dependency-substitutions.md",
     "Update checklist items",
     "End by handing off to `mobile-qa-release`"
@@ -346,6 +422,18 @@ assert(mobileAudit.screens.some((s) => s.status === "partial"), "Mobile fixture 
 assert(mobileAudit.incompleteMarkers.todo?.length > 0, "Mobile fixture audit must detect TODO markers");
 assert(mobileAudit.completionRisks.includes("partial-screens"), "Mobile fixture audit must flag partial-screens risk");
 assert(typeof mobileAudit.brokenScreenCount === "number", "Mobile fixture audit must include brokenScreenCount field");
+assert(
+  mobileAudit.screens.find((screen) => screen.file.endsWith("LoginScreen.tsx"))?.status === "implemented",
+  "A TextInput placeholder prop must not make a screen partial"
+);
+assert(
+  !mobileAudit.incompleteMarkers.placeholder?.some((entry) => entry.file.endsWith("LoginScreen.tsx")),
+  "A TextInput placeholder prop must not be reported as an incomplete marker"
+);
+assert(
+  !mobileAudit.completionRisks.includes("missing-eas-config"),
+  "Apps that do not invoke EAS must not be flagged for a missing eas.json"
+);
 
 const sampleWebPlan = read("examples/sample-web-to-mobile-plan.md");
 for (const phrase of [
@@ -383,14 +471,14 @@ for (const [path, phrases] of Object.entries(paritySkillChecks)) {
 const scanReviewSkillChecks = {
   "skills/mobile-qa-scan/SKILL.md": [
     "name: mobile-qa-scan",
-    "node scripts/mobile-app-audit.mjs",
+    "node <mobile-app-audit-skill-dir>/scripts/mobile-app-audit.mjs",
     "docs/mobile-qa/",
     "Do not read source files",
     "Verdict",
   ],
   "skills/mobile-deep-review/SKILL.md": [
     "name: mobile-deep-review",
-    "node scripts/mobile-app-audit.mjs",
+    "node <mobile-app-audit-skill-dir>/scripts/mobile-app-audit.mjs",
     "docs/mobile-review/",
     "severity",
     "Verdict",
@@ -414,9 +502,9 @@ const mobileResumeSkillChecks = {
   ],
   "skills/mobile-app-audit/SKILL.md": [
     "name: mobile-app-audit",
-    "node scripts/mobile-app-audit.mjs",
+    "node <skill-dir>/scripts/mobile-app-audit.mjs",
     "Screen completion status",
-    "End with a clear handoff to `mobile-completion-plan`",
+    "handoff to",
   ],
   "skills/mobile-completion-plan/SKILL.md": [
     "name: mobile-completion-plan",
@@ -425,6 +513,7 @@ const mobileResumeSkillChecks = {
     "Completion Status",
     "Screen Inventory",
     "Do not edit app code before approval",
+    "update that file in place",
   ],
 };
 

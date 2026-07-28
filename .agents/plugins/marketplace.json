@@ -1,0 +1,20 @@
+{
+  "name": "web-to-mobile-marketplace",
+  "interface": {
+    "displayName": "WebToMobile"
+  },
+  "plugins": [
+    {
+      "name": "web-to-mobile",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/suntay44/web-to-mobile-magic-plugin.git"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

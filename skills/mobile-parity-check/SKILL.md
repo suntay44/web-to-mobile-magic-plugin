@@ -40,7 +40,8 @@ Mark the following for explicit human visual sign-off — the agent cannot verif
 - Brand color rendering on screen.
 - Accessibility contrast ratios in the rendered UI.
 
-See Human Sign-Off Required in `references/output-contracts.md`.
+See Human Sign-Off Required in
+`../mobile-migration-plan/references/output-contracts.md`.
 
 ## Plan Update
 

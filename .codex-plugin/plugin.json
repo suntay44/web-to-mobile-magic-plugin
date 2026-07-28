@@ -1,6 +1,6 @@
 {
   "name": "web-to-mobile",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Plan-first workflow for transforming websites and web apps into Expo React Native mobile apps.",
   "author": {
     "name": "WebToMobile contributors",
@@ -36,10 +36,10 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "WebToMobile",
-    "shortDescription": "Turn web apps into mobile apps with an audit, plan, checklist, implementation, and tests",
+    "shortDescription": "Plan web-to-mobile builds",
     "longDescription": "Use WebToMobile to inspect an existing website or web app, create a Markdown migration plan, map web routes to mobile navigation, implement an Expo React Native app from an approved checklist, and verify the result.",
     "developerName": "WebToMobile contributors",
-    "category": "Coding",
+    "category": "Developer Tools",
     "capabilities": [
       "Interactive",
       "Read",
@@ -50,8 +50,9 @@
       "Use WebToMobile on https://github.com/user/repo."
     ],
     "websiteURL": "https://github.com/suntay44/web-to-mobile-magic-plugin",
-    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
-    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
-    "brandColor": "#0EA5E9"
+    "supportURL": "https://github.com/suntay44/web-to-mobile-magic-plugin/issues",
+    "brandColor": "#0369A1",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/logo.svg"
   }
 }

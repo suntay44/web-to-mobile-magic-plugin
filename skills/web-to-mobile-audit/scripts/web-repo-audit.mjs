@@ -1,0 +1,424 @@
+#!/usr/bin/env node
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename, join, relative, extname, sep } from "node:path";
+
+const root = process.argv[2] || ".";
+const maxFiles = Number(process.env.WEBTOMOBILE_MAX_FILES || 120);
+const routeRoots = ["app", "pages", "src/app", "src/pages", "routes", "src/routes", "app/routes"];
+const apiRouteRoots = ["app/api", "src/app/api", "pages/api", "src/pages/api"];
+const serverPatterns = [
+  ["server-actions", /["']use server["']/g],
+  ["use-client-directive", /["']use client["']/g],
+  ["getServerSideProps", /\bgetServerSideProps\b/g],
+  ["getStaticProps", /\bgetStaticProps\b/g],
+  ["trpc-router", /createTRPCRouter|initTRPC/g],
+];
+const sourceExts = new Set([".ts", ".tsx", ".js", ".jsx", ".vue", ".svelte", ".astro", ".html"]);
+const ignoreDirs = new Set([".git", "node_modules", ".next", "dist", "build", ".expo", ".turbo", "coverage"]);
+const browserPatterns = [
+  ["window", /\bwindow\b/g],
+  ["document", /\bdocument\b/g],
+  ["localStorage", /\blocalStorage\b/g],
+  ["sessionStorage", /\bsessionStorage\b/g],
+  ["cookie", /\bdocument\.cookie\b|\bcookies?\(/g],
+  ["navigator", /\bnavigator\b/g],
+  ["matchMedia", /\bmatchMedia\b/g],
+  ["IntersectionObserver", /\bIntersectionObserver\b/g]
+];
+const routePatterns = [
+  ["jsx-route-path", /<Route\b[^>]*\bpath=["'`]([^"'`]+)["'`]/g],
+  ["object-route-path", /\bpath\s*:\s*["'`]([^"'`]+)["'`]/g],
+  ["file-route-link", /\bto=["'`]([^"'`]+)["'`]/g],
+  ["href-route", /\bhref=["'`](\/[^"'`#?]+)["'`]/g]
+];
+const nextAppRouteRoots = ["app", "src/app"];
+const nextAppServerDataPatterns = [
+  /\bawait\s+fetch\s*\(/,
+  /\bfetch\s*\(/,
+  /\bcookies\s*\(/,
+  /\bheaders\s*\(/,
+  /\bgetServerSession\s*\(/,
+  /\bprisma\./,
+  /\bdrizzle\(/,
+  /\bcreateServerClient\s*\(/,
+  /\bprocess\.env\./,
+];
+const dependencyGroups = {
+  auth: ["@clerk/nextjs", "@clerk/clerk-react", "next-auth", "@auth/core", "@supabase/supabase-js", "firebase", "aws-amplify", "lucia", "better-auth"],
+  api: ["@tanstack/react-query", "swr", "axios", "graphql", "@apollo/client", "urql", "@trpc/client", "@trpc/react-query", "ky"],
+  state: ["zustand", "redux", "@reduxjs/toolkit", "jotai", "recoil", "mobx", "valtio"],
+  forms: ["react-hook-form", "formik", "zod", "yup", "valibot"],
+  styling: ["tailwindcss", "styled-components", "@emotion/react", "sass", "less", "class-variance-authority", "bootstrap"],
+  ui: ["@mui/material", "antd", "chakra-ui", "@chakra-ui/react", "@radix-ui/react-dialog", "shadcn", "framer-motion"],
+  routing: ["react-router", "react-router-dom", "@tanstack/react-router"],
+  mobileCandidate: ["expo", "react-native", "expo-router", "@react-navigation/native", "nativewind"]
+};
+
+function readJson(path) {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function walk(dir, files = []) {
+  if (!existsSync(dir) || files.length >= maxFiles) return files;
+  for (const entry of readdirSync(dir)) {
+    if (ignoreDirs.has(entry)) continue;
+    const path = join(dir, entry);
+    const stat = statSync(path);
+    if (stat.isDirectory()) {
+      walk(path, files);
+    } else if (sourceExts.has(extname(entry))) {
+      files.push(path);
+    }
+    if (files.length >= maxFiles) break;
+  }
+  return files;
+}
+
+function countMatches(text, pattern) {
+  return [...text.matchAll(pattern)].length;
+}
+
+function sampleBrowserApiUsage(files) {
+  const usage = {};
+  for (const file of files) {
+    let text = "";
+    try {
+      text = readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    for (const [name, pattern] of browserPatterns) {
+      const count = countMatches(text, pattern);
+      if (!count) continue;
+      usage[name] ||= [];
+      if (usage[name].length < 8) {
+        usage[name].push({ file: relative(root, file), count });
+      }
+    }
+  }
+  return usage;
+}
+
+function scanInlineRoutes(files) {
+  const seen = new Set();
+  const routes = [];
+  for (const file of files) {
+    let text = "";
+    try {
+      text = readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    for (const [source, pattern] of routePatterns) {
+      for (const match of text.matchAll(pattern)) {
+        const route = match[1];
+        if (!route?.startsWith("/") || route.startsWith("//")) continue;
+        const key = `${route}:${file}:${source}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (routes.length < 80) {
+          routes.push({ route, file: relative(root, file), source });
+        }
+      }
+    }
+  }
+  return routes;
+}
+
+function routeFromFile(base, file) {
+  let route = relative(base, file)
+    .split(sep).join("/")
+    .replace(/\.[^.]+$/, "")
+    .replace(/(^|\/)(page|index)$/, "$1")
+    .replace(/\[\[\.\.\.(\w+)\]\]/g, ":$1*?")
+    .replace(/\[\.\.\.(\w+)\]/g, ":$1*")
+    .replace(/\[(\w+)\]/g, ":$1")
+    .replace(/(^|\/)\([^)]*\)(?=\/|$)/g, "$1")
+    .replace(/(^|\/)@[^/]+(?=\/|$)/g, "$1")
+    .replace(/(^|\/)(?:\(\.\)|\(\.\.\)|\(\.\.\.\)|\(\.\.\)\(\.\.\))+/g, "$1")
+    .replace(/\/+/g, "/")
+    .replace(/\/$/, "");
+  return `/${route}`.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
+}
+
+function isFileSystemRoute(routeRoot, file) {
+  const relativePath = relative(join(root, routeRoot), file).split(sep).join("/");
+  const fileName = basename(file);
+  const stem = fileName.replace(/\.[^.]+$/, "");
+
+  if (allDeps.next && nextAppRouteRoots.includes(routeRoot)) {
+    return stem === "page" && !relativePath.startsWith("api/");
+  }
+
+  if (allDeps.next && ["pages", "src/pages"].includes(routeRoot)) {
+    return !relativePath.startsWith("api/") && !stem.startsWith("_");
+  }
+
+  return true;
+}
+
+function isInternalApiRoute(apiRoot, file) {
+  const stem = basename(file).replace(/\.[^.]+$/, "");
+  return apiRoot === "app/api" || apiRoot === "src/app/api"
+    ? stem === "route"
+    : !stem.startsWith("_");
+}
+
+const packageJson = readJson(join(root, "package.json"));
+const allDeps = {
+  ...(packageJson?.dependencies || {}),
+  ...(packageJson?.devDependencies || {})
+};
+
+const frameworks = [];
+for (const [name, label] of [
+  ["next", "Next.js"],
+  ["react", "React"],
+  ["vite", "Vite"],
+  ["@remix-run/react", "Remix"],
+  ["astro", "Astro"],
+  ["vue", "Vue"],
+  ["svelte", "Svelte"],
+  ["expo", "Expo"],
+  ["react-native", "React Native"]
+]) {
+  if (allDeps[name]) frameworks.push(label);
+}
+
+let nextjsRouter = null;
+if (allDeps["next"]) {
+  const hasAppDir = existsSync(join(root, "app")) || existsSync(join(root, "src/app"));
+  const hasPagesDir = existsSync(join(root, "pages")) || existsSync(join(root, "src/pages"));
+  nextjsRouter = hasAppDir && !hasPagesDir
+    ? "app-router"
+    : hasPagesDir && !hasAppDir
+      ? "pages-router"
+      : hasAppDir && hasPagesDir
+        ? "app-and-pages-mixed"
+        : "unknown";
+}
+
+let vueVersion = null;
+if (allDeps["vue"]) {
+  const vueVer = allDeps["vue"];
+  vueVersion = vueVer && (vueVer.startsWith("3") || vueVer.startsWith("^3") || vueVer.startsWith("~3"))
+    ? "vue3"
+    : vueVer && (vueVer.startsWith("2") || vueVer.startsWith("^2") || vueVer.startsWith("~2"))
+      ? "vue2"
+      : "unknown";
+}
+
+// Early disqualification: detect inputs that are already mobile or have no
+// frontend to port, so the audit skill can stop and redirect immediately.
+const backendOnlyMarkers = ["express", "fastify", "koa", "hapi", "@nestjs/core", "nestjs", "django", "flask", "rails"];
+const isMobile =
+  frameworks.some((f) => ["Expo", "React Native"].includes(f)) ||
+  existsSync(join(root, "ios")) ||
+  existsSync(join(root, "android"));
+const hasWebFrontend = frameworks.some((f) => !["Expo", "React Native"].includes(f));
+const isBackendOnly =
+  !isMobile &&
+  !hasWebFrontend &&
+  backendOnlyMarkers.some((d) => allDeps[d]);
+const hasStaticHtml =
+  !isMobile && !hasWebFrontend && !isBackendOnly &&
+  existsSync(root) && readdirSync(root).some((f) => f.endsWith(".html"));
+
+const inputClassification = isMobile
+  ? "already-mobile"
+  : hasWebFrontend
+    ? "web-frontend"
+    : isBackendOnly
+      ? "backend-only"
+      : hasStaticHtml
+        ? "static-html"
+        : "unknown";
+
+const dependencyMatches = {};
+for (const [group, names] of Object.entries(dependencyGroups)) {
+  dependencyMatches[group] = names.filter((name) => allDeps[name]);
+}
+
+const sourceFiles = walk(root, []);
+
+const routeMap = new Map();
+function addRoute(route, file, source) {
+  if (!routeMap.has(route)) {
+    routeMap.set(route, {
+      route,
+      file,
+      source,
+      files: [],
+      sources: []
+    });
+  }
+  const entry = routeMap.get(route);
+  if (file && !entry.files.includes(file)) entry.files.push(file);
+  if (source && !entry.sources.includes(source)) entry.sources.push(source);
+}
+
+for (const routeRoot of routeRoots) {
+  const absolute = join(root, routeRoot);
+  if (!existsSync(absolute)) continue;
+  for (const file of walk(absolute, [])) {
+    if (!isFileSystemRoute(routeRoot, file)) continue;
+    const route = routeFromFile(absolute, file);
+    addRoute(route, relative(root, file), "file-system");
+  }
+}
+
+for (const route of scanInlineRoutes(sourceFiles)) {
+  addRoute(route.route, route.file, route.source);
+}
+
+const routes = [...routeMap.values()].slice(0, 80);
+
+const packageManager = existsSync(join(root, "pnpm-lock.yaml"))
+  ? "pnpm"
+  : existsSync(join(root, "yarn.lock"))
+    ? "yarn"
+    : existsSync(join(root, "bun.lock")) || existsSync(join(root, "bun.lockb"))
+      ? "bun"
+    : existsSync(join(root, "package-lock.json"))
+      ? "npm"
+      : "unknown";
+
+const interestingFiles = [
+  "next.config.js",
+  "next.config.mjs",
+  "vite.config.ts",
+  "vite.config.js",
+  "tailwind.config.ts",
+  "tailwind.config.js",
+  "tsconfig.json",
+  ".env.example",
+  "app.json",
+  "app.config.ts",
+  "app.config.js",
+  "app.config.mjs"
+].filter((file) => existsSync(join(root, file)));
+
+const envVarNames = [];
+for (const envFile of [".env.example", ".env.local", ".env"]) {
+  const envPath = join(root, envFile);
+  if (!existsSync(envPath)) continue;
+  try {
+    const lines = readFileSync(envPath, "utf8").split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const name = trimmed.split("=")[0].trim();
+      if (name && /^[A-Z_][A-Z0-9_]*$/.test(name) && !envVarNames.includes(name)) {
+        envVarNames.push(name);
+      }
+    }
+  } catch {
+    // Skip unreadable env files.
+  }
+  break;
+}
+
+const routeCount = routes.length;
+const routeConfidence = routeCount > 0
+  ? "detected-from-files"
+  : sourceFiles.length > 0
+    ? "not-detected-check-router-config"
+    : "no-source-files-detected";
+
+// Backend coupling: a mobile app needs a client-callable API. Route Handlers and
+// pages/api files are HTTP endpoints and therefore need compatibility/auth review,
+// but their mere presence does not make the backend unavailable to a mobile client.
+const internalApiRoutes = [];
+for (const apiRoot of apiRouteRoots) {
+  const absolute = join(root, apiRoot);
+  if (!existsSync(absolute)) continue;
+  for (const file of walk(absolute, [])) {
+    if (!isInternalApiRoute(apiRoot, file)) continue;
+    if (internalApiRoutes.length < 40) internalApiRoutes.push(relative(root, file));
+  }
+}
+
+const serverSignals = [];
+let hasNextAppServerComponent = false;
+let hasNextAppServerDataAccess = false;
+for (const file of sourceFiles) {
+  let text = "";
+  try {
+    text = readFileSync(file, "utf8");
+  } catch {
+    continue;
+  }
+  const isNextAppFile = Boolean(
+    allDeps["next"] &&
+    nextjsRouter?.includes("app") &&
+    nextAppRouteRoots.some((routeRoot) => {
+      const relativePath = relative(join(root, routeRoot), file);
+      return relativePath && !relativePath.startsWith("..") && !relativePath.startsWith("/");
+    })
+  );
+  if (isNextAppFile && !/["']use client["']/.test(text)) {
+    hasNextAppServerComponent = true;
+    if (nextAppServerDataPatterns.some((pattern) => pattern.test(text))) {
+      hasNextAppServerDataAccess = true;
+    }
+  }
+  for (const [name, pattern] of serverPatterns) {
+    pattern.lastIndex = 0;
+    if (!serverSignals.includes(name) && pattern.test(text)) serverSignals.push(name);
+  }
+}
+if (hasNextAppServerComponent && !serverSignals.includes("server-components")) {
+  serverSignals.push("server-components");
+}
+if (hasNextAppServerDataAccess && !serverSignals.includes("server-component-data-access")) {
+  serverSignals.push("server-component-data-access");
+}
+
+const serverCoupled =
+  serverSignals.some((s) => ["server-actions", "getServerSideProps", "trpc-router"].includes(s));
+const renderingModel = serverCoupled
+  ? "server-coupled"
+  : dependencyMatches.api.length > 0
+    ? "client-spa-external-api"
+    : "unknown";
+
+const mobileRisks = [];
+const browserApiUsage = sampleBrowserApiUsage(sourceFiles);
+if (Object.keys(browserApiUsage).length) mobileRisks.push("browser-only-apis");
+if (dependencyMatches.auth.length) mobileRisks.push("mobile-auth-session-handling");
+if (dependencyMatches.api.length) mobileRisks.push("api-data-layer-port");
+if (dependencyMatches.styling.includes("tailwindcss")) mobileRisks.push("web-styling-port");
+if (dependencyMatches.ui.length) mobileRisks.push("dom-ui-component-rewrite");
+if (renderingModel === "server-coupled") mobileRisks.push("backend-not-portable-needs-api");
+if (internalApiRoutes.length) mobileRisks.push("internal-api-mobile-compatibility-review");
+// Server components are not a hard "server-coupled" signal on their own. Only flag
+// App Router API review when the server component appears to access server-side data.
+if (renderingModel !== "server-coupled" && serverSignals.includes("server-component-data-access")) {
+  mobileRisks.push("server-component-data-fetching-review");
+}
+
+console.log(JSON.stringify({
+  root,
+  packageManager,
+  scripts: packageJson?.scripts || {},
+  frameworks,
+  nextjsRouter,
+  vueVersion,
+  dependencyMatches,
+  dependencyNames: Object.keys(allDeps).sort(),
+  sourceFilesScanned: sourceFiles.length,
+  inputClassification,
+  routes,
+  routeConfidence,
+  renderingModel,
+  internalApiRoutes,
+  serverSignals,
+  browserApiUsage,
+  mobileRisks,
+  interestingFiles,
+  envVarNames
+}, null, 2));

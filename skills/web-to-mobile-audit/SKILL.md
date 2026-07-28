@@ -10,7 +10,8 @@ Inspect the source before anyone plans or builds a mobile app. Accept: current w
 
 ## Capability Tier
 
-Declare the tier up front (see `references/output-contracts.md`):
+Declare the tier up front (see
+`../mobile-migration-plan/references/output-contracts.md`):
 
 - **URL only** → UI/UX inspection only; no component logic, state, API, or authed pages.
 - **Repo or local** → full source analysis.
@@ -19,7 +20,10 @@ If repo/local access fails, announce the downgrade and drop to the URL tier. Nev
 
 ## Early Disqualification
 
-Run `node scripts/web-repo-audit.mjs <target-path>` first for local repos. Check `inputClassification`:
+Resolve this skill's directory from the loaded `SKILL.md`, then run
+`node <skill-dir>/scripts/web-repo-audit.mjs <target-path>` for local repos.
+Do not resolve the script from the user's working directory. Check
+`inputClassification`:
 
 - `already-mobile` → stop. Repo has Expo/React Native/`ios`/`android`. Redirect to `/mobile-resume` or `/mobile-review`.
 - `backend-only` → stop. No frontend to port. Ask for the web client repo.
@@ -33,7 +37,11 @@ The audit JSON covers framework, deps, scripts, routes, rendering model, interna
 - Framework and runtime (from JSON `frameworks` array).
 - route/page inventory and layout hierarchy.
 - API clients, data fetching, server actions, RPC, GraphQL, REST.
-- Rendering model: `renderingModel` + `internalApiRoutes`. Server-coupled = no portable API; record as API Needs blocker.
+- Rendering model: `renderingModel` + `internalApiRoutes`. Server Actions,
+  server-only data access, and SSR loaders may require new client-callable
+  endpoints. Existing Route Handlers and `pages/api` endpoints are HTTP
+  endpoints; review their auth, CORS, deployment URL, and mobile compatibility
+  instead of treating them as automatically unavailable.
 - Auth: sessions, cookies, OAuth, protected routes.
 - State, forms, validation, query/cache libraries.
 - Styling system and design tokens.
@@ -46,4 +54,12 @@ Use the available browser/fetch tools. Check `/sitemap.xml` and `/robots.txt` fi
 
 ## Output
 
-Consult `references/dependency-substitutions.md` when listing dep risks — tag each as drop-in / config / rewrite. Write findings into `## Audit Findings` in the plan file (repo/local: `docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md`; URL-only: `docs/web-to-mobile/YYYY-MM-DD-ui-ux-spec.md`). Use concrete evidence. Tag findings `[from-code]`, `[inferred]`, or `[assumption]`. Return a brief summary. End with a clear handoff to `mobile-migration-plan`.
+Consult `../mobile-migration-plan/references/dependency-substitutions.md` when
+listing dep risks — tag each as drop-in / config / rewrite. Write findings into
+`## Audit Findings` in the plan file (repo/local:
+`docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md`; URL-only:
+`docs/web-to-mobile/YYYY-MM-DD-ui-ux-spec.md`). Use concrete evidence. Tag
+findings `[from-code]`, `[inferred]`, or `[assumption]`. Return a brief summary.
+Add `Plan Status: Audit complete — planning pending` near the top so the planning
+phase can recognize and update this same file. End with a clear handoff to
+`mobile-migration-plan`.

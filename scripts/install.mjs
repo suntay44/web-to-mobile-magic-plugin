@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * WebToMobile global installer.
- * Symlinks commands → ~/.claude/commands/ and skills → ~/.claude/skills/
+ * Installs commands → ~/.claude/commands/ and skills → ~/.claude/skills/
  * so all six slash commands work in Claude Code CLI and Desktop App.
+ * Uses symlinks on macOS/Linux and ownership-marked copies on Windows.
  *
  * Usage:
  *   node scripts/install.mjs           # install missing commands/skills
@@ -12,20 +13,24 @@
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, statSync, unlinkSync } from "node:fs";
-import { symlink, copyFile, cp } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { symlink, copyFile, cp, rm, writeFile } from "node:fs/promises";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { homedir, platform } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const home = homedir();
-const isWindows = platform() === "win32";
+const copyInstall = platform() === "win32" ||
+  process.env.WEBTOMOBILE_INSTALL_MODE === "copy";
 const unlink = process.argv.includes("--unlink");
 const refresh = process.argv.includes("--refresh");
 const update = process.argv.includes("--update");
 const shouldRefresh = refresh || update;
+const supportedFlags = new Set(["--unlink", "--refresh", "--update"]);
 
-const CLAUDE_DIR = join(home, ".claude");
+const CLAUDE_DIR = process.env.WEBTOMOBILE_CLAUDE_DIR
+  ? resolve(process.env.WEBTOMOBILE_CLAUDE_DIR)
+  : join(home, ".claude");
 const COMMANDS_DEST = join(CLAUDE_DIR, "commands");
 const SKILLS_DEST = join(CLAUDE_DIR, "skills");
 
@@ -54,7 +59,52 @@ function symlinkTarget(dest) {
 function isOwnedSymlink(dest) {
   if (!pathExists(dest)) return false;
   const stat = lstatSync(dest);
-  return stat.isSymbolicLink() && symlinkTarget(dest).startsWith(root);
+  const target = stat.isSymbolicLink() ? symlinkTarget(dest) : "";
+  return stat.isSymbolicLink() && (target === root || target.startsWith(`${root}${sep}`));
+}
+
+function copyOwnershipMarker(dest) {
+  if (!pathExists(dest)) return `${dest}.web-to-mobile-owned.json`;
+  return statSync(dest).isDirectory()
+    ? join(dest, ".web-to-mobile-owned.json")
+    : `${dest}.web-to-mobile-owned.json`;
+}
+
+function isOwnedCopy(dest) {
+  if (!pathExists(dest)) return false;
+  const marker = copyOwnershipMarker(dest);
+  if (!existsSync(marker)) return false;
+  try {
+    const ownership = JSON.parse(readFileSync(marker, "utf8"));
+    return ownership.owner === "web-to-mobile" &&
+      ownership.destination === resolve(dest);
+  } catch {
+    return false;
+  }
+}
+
+function isOwnedInstallation(dest) {
+  return isOwnedSymlink(dest) || isOwnedCopy(dest);
+}
+
+async function markOwnedCopy(src, dest) {
+  const marker = copyOwnershipMarker(dest);
+  await writeFile(marker, `${JSON.stringify({
+    owner: "web-to-mobile",
+    source: relative(root, src),
+    destination: resolve(dest),
+  }, null, 2)}\n`, "utf8");
+}
+
+async function removeOwnedInstallation(dest) {
+  if (isOwnedSymlink(dest)) {
+    unlinkSync(dest);
+    return;
+  }
+  const marker = copyOwnershipMarker(dest);
+  const isDir = statSync(dest).isDirectory();
+  await rm(dest, { recursive: isDir, force: false });
+  if (!isDir && existsSync(marker)) await rm(marker);
 }
 
 function runGit(args, options = {}) {
@@ -107,10 +157,10 @@ function updateRepo() {
 
 async function linkOrCopy(src, dest, label) {
   if (pathExists(dest)) {
-    if (shouldRefresh && isOwnedSymlink(dest)) {
-      unlinkSync(dest);
+    if (shouldRefresh && isOwnedInstallation(dest)) {
+      await removeOwnedInstallation(dest);
     } else if (shouldRefresh) {
-      warn(`${label} — exists but is not a WebToMobile symlink; skipped`);
+      warn(`${label} — exists but is not a WebToMobile-owned install; skipped`);
       return;
     } else {
       skip(`${label} — already exists`);
@@ -118,9 +168,10 @@ async function linkOrCopy(src, dest, label) {
     }
   }
   try {
-    if (isWindows) {
+    if (copyInstall) {
       const isDir = statSync(src).isDirectory();
       isDir ? await cp(src, dest, { recursive: true }) : await copyFile(src, dest);
+      await markOwnedCopy(src, dest);
       ok(`${label} (copied)`);
     } else {
       await symlink(src, dest);
@@ -131,14 +182,14 @@ async function linkOrCopy(src, dest, label) {
   }
 }
 
-function removeLink(dest, label) {
+async function removeLink(dest, label) {
   if (!pathExists(dest)) { skip(`${label} — not installed`); return; }
   try {
-    if (!isOwnedSymlink(dest)) {
-      warn(`${label} — exists but is not a WebToMobile symlink; skipped`);
+    if (!isOwnedInstallation(dest)) {
+      warn(`${label} — exists but is not a WebToMobile-owned install; skipped`);
       return;
     }
-    unlinkSync(dest);
+    await removeOwnedInstallation(dest);
     ok(`${label} removed`);
   } catch (err) {
     warn(`${label} — ${err.message}`);
@@ -146,6 +197,14 @@ function removeLink(dest, label) {
 }
 
 async function main() {
+  const unknownFlags = process.argv.slice(2).filter((arg) =>
+    arg.startsWith("-") && !supportedFlags.has(arg)
+  );
+  if (unknownFlags.length) {
+    warn(`Unknown option${unknownFlags.length > 1 ? "s" : ""}: ${unknownFlags.join(", ")}`);
+    process.exit(1);
+  }
+
   if (unlink && update) {
     warn("Choose either --unlink or --update, not both.");
     process.exit(1);
@@ -173,9 +232,9 @@ async function main() {
 
   if (unlink) {
     console.log("Removing commands from ~/.claude/commands/");
-    for (const f of commandFiles) removeLink(join(COMMANDS_DEST, f), `/${f.replace(".md", "")}`);
+    for (const f of commandFiles) await removeLink(join(COMMANDS_DEST, f), `/${f.replace(".md", "")}`);
     console.log("\nRemoving skills from ~/.claude/skills/");
-    for (const d of skillDirs) removeLink(join(SKILLS_DEST, d), d);
+    for (const d of skillDirs) await removeLink(join(SKILLS_DEST, d), d);
     console.log("\n✓ Uninstall complete.\n");
     return;
   }
@@ -205,9 +264,9 @@ async function main() {
   console.log("  Cursor loads these as AI rules (slash commands coming soon).");
 
   console.log("\n── Codex ───────────────────────────────────────────────");
-  console.log("  In Codex: Settings → Plugins → Add Plugin");
-  console.log("  Use HTTPS URL: https://github.com/suntay44/web-to-mobile-magic-plugin");
-  console.log("  (Do not use the SSH URL — Codex clones via HTTPS for public repos.)");
+  console.log("  Add the repository marketplace with:");
+  console.log("  codex plugin marketplace add suntay44/web-to-mobile-magic-plugin");
+  console.log("  Then install WebToMobile from ChatGPT desktop or Codex CLI.");
 
   console.log("\n── Validate ────────────────────────────────────────────");
   console.log("  node tests/validate-structure.mjs\n");

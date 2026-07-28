@@ -22,8 +22,12 @@ Use one phase skill at a time:
 
 1. `mobile-app-audit` inspects the existing app and records what is complete, partial, and missing.
 2. `mobile-completion-plan` creates `docs/mobile-resume/YYYY-MM-DD-mobile-completion-plan.md` with a completion checklist, test plan, and approval gate.
-3. `expo-react-native-build` runs only after the user approved it and implements from the checklist — skip already-checked `- [x]` items, implement only `- [ ]` items.
-4. `mobile-qa-release` verifies before completion.
+3. For Expo/React Native apps, `expo-react-native-build` runs only after the user
+   approved it and implements from the checklist — skip already-checked `- [x]`
+   items, implement only `- [ ]` items. For Swift apps, stop after the approved
+   plan and hand off to the existing native implementation workflow; do not
+   invoke the Expo builder.
+4. `mobile-qa-release` verifies an implemented app before completion.
 
 Do not generate or edit app code until a plan exists and the user approved it.
 

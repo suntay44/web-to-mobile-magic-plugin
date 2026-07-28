@@ -17,10 +17,13 @@ Use the audit script JSON to identify which files to read. Read at most 15% of s
 **1. Audit script**
 
 ```bash
-node scripts/mobile-app-audit.mjs <target-path>
+node <mobile-app-audit-skill-dir>/scripts/mobile-app-audit.mjs <target-path>
 ```
 
-Use the JSON to identify: framework, partial/broken screens, nav structure, auth, state, storage, test coverage, build config, and completion risks.
+Resolve `<mobile-app-audit-skill-dir>` from the installed sibling
+`../mobile-app-audit` skill directory, not from the user's working directory.
+Use the JSON to identify: framework, partial/broken screens, nav structure,
+auth, state, storage, test coverage, build config, and completion risks.
 
 **2. Targeted file reads**
 

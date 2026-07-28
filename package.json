@@ -1,0 +1,19 @@
+{
+  "name": "web-to-mobile-magic-plugin",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Validation tooling for the WebToMobile AI plugin and skill set.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/validate-structure.mjs && node tests/install-lifecycle.mjs",
+    "check": "node tests/check-syntax.mjs && npm test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suntay44/web-to-mobile-magic-plugin.git"
+  }
+}

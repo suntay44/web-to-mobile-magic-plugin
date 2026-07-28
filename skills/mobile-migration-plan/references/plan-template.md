@@ -2,7 +2,8 @@
 
 ## Capabilities & Limits
 
-State the input tier (URL → UI/UX only, or repo/local → full scope) and what this plan can and cannot deliver as a result. See `references/output-contracts.md`.
+State the input tier (URL → UI/UX only, or repo/local → full scope) and what this
+plan can and cannot deliver as a result. See `output-contracts.md`.
 
 ## Source
 

@@ -15,12 +15,18 @@ Before editing code, confirm:
 1. A plan exists under `docs/web-to-mobile/` (migration) or `docs/mobile-resume/` (completion).
 2. The plan has an Implementation Checklist.
 3. The user approved implementation — if not, return to `mobile-migration-plan` or `mobile-completion-plan`.
+4. The approved stack is Expo React Native. If the plan selected Capacitor,
+   PWA/PWABuilder, Stay Web, or Swift/Native, stop and use the handoff named in
+   the plan; this skill must not implement that verdict.
 
 ## Pre-Build Validation
 
 Before writing any screen or component code, verify:
 
 - `app.json` has `name`, `slug`, and `version` set.
+- `npx expo-doctor` and `npx expo install --check` pass. Use
+  `npx expo install --fix` for dependency alignment; plan SDK upgrades instead
+  of silently changing major versions.
 - Any environment variables referenced in source code have corresponding entries in `.env.example` or are documented in the plan.
 - If the plan targets EAS Build, `eas.json` exists with at least one build profile.
 
@@ -33,10 +39,13 @@ If a required value is missing, add it to the plan's Unknowns/Blockers section a
 - Keep changes scoped to the approved plan.
 - Follow the plan's reusable code, rewrite-required code, mobile-native gaps, and unknowns/blockers sections.
 - Use the source repo's package manager and style.
-- Prefer Expo React Native unless the approved plan selected Swift/SwiftUI.
+- Implement only Expo React Native plans; never silently substitute Expo for a
+  different approved verdict.
 - Reuse TypeScript types, API clients, validation schemas, state patterns, assets, and non-DOM business logic where practical.
 - Rewrite DOM components, CSS-dependent UI, browser storage, cookies, and OAuth redirects for mobile.
-- When replacing a web dependency, consult `references/dependency-substitutions.md` for known swaps, difficulty rating, and notes. Do not guess if the package is listed.
+- When replacing a web dependency, consult
+  `../mobile-migration-plan/references/dependency-substitutions.md` for known
+  swaps, difficulty rating, and notes. Do not guess if the package is listed.
 - Update checklist items from `- [ ]` to `- [x]` as they are completed.
 - Add a short implementation note in the plan if reality differs from the original plan.
 

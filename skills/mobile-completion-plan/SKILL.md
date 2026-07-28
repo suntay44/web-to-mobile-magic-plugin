@@ -20,7 +20,11 @@ Create:
 docs/mobile-resume/YYYY-MM-DD-mobile-completion-plan.md
 ```
 
-Use the current local date. If that filename exists, append a short suffix such as `-2`.
+Use the current local date. If the audit already created the current run's file
+with `Plan Status: Audit complete — planning pending`, update that file in place
+and preserve its Audit Findings. Never add `-2` solely because the audit created
+the planned filename. Add a numeric suffix only for a distinct completion run
+when the existing file is already planned, approved, or completed.
 
 ## Required Sections
 
@@ -47,5 +51,6 @@ After writing the plan:
 1. Summarize what is done, partial, broken, and missing.
 2. Link or point to the plan file.
 3. Ask the user to approve implementation.
+4. Set `Plan Status: Planning complete — approval pending`.
 
 Do not edit app code before approval.

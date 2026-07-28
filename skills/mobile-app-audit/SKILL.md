@@ -23,17 +23,23 @@ Do not propose implementation until the audit is complete.
 For local repos, run the bundled audit script when available:
 
 ```bash
-node scripts/mobile-app-audit.mjs <target-path>
+node <skill-dir>/scripts/mobile-app-audit.mjs <target-path>
 ```
 
-The JSON covers screens, navigators, incomplete markers, missing config, and test coverage — do not re-read those files unless the JSON value is ambiguous.
+Resolve `<skill-dir>` from the directory containing this loaded `SKILL.md`; do
+not resolve it from the user's working directory. The JSON covers screens,
+navigators, incomplete markers, missing config, and test coverage — do not
+re-read those files unless the JSON value is ambiguous.
 
 ## Completion States
 
 The audit script reports three screen states:
 
-- **implemented** — renders real data with no stubs or suppressed errors.
-- **partial** — has TODO, FIXME, placeholder text, or `return null` without `@ts-ignore`.
+- **implemented** — no incomplete markers were detected; runtime behavior still
+  requires validation.
+- **partial** — has TODO, FIXME, an explicit placeholder/not-implemented
+  comment, or `return null` without `@ts-ignore`. A normal React Native
+  `placeholder` prop does not make a screen partial.
 - **broken** — has `@ts-ignore` combined with `return null` (type errors suppressed alongside empty render).
 
 Report all three counts. Broken screens are higher priority than partial screens in the completion plan.
@@ -59,4 +65,9 @@ For apps using `expo-router`, the `app/` directory uses file-based routing. The 
 
 ## Output
 
-Write raw findings directly into `## Audit Findings` in `docs/mobile-resume/YYYY-MM-DD-mobile-completion-plan.md` (create the file with just that section if the full plan is not ready). Use concrete evidence: file paths, screen names, dep names, error messages, and TODO locations. Return a brief summary to chat. End with a clear handoff to `mobile-completion-plan`.
+Write raw findings directly into `## Audit Findings` in
+`docs/mobile-resume/YYYY-MM-DD-mobile-completion-plan.md` (create the file with
+that section and `Plan Status: Audit complete — planning pending` if the full
+plan is not ready). Use concrete evidence: file paths, screen names, dep names,
+error messages, and TODO locations. Return a brief summary to chat. End with a
+clear handoff to `mobile-completion-plan`.

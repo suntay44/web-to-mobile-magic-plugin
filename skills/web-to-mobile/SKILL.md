@@ -22,9 +22,13 @@ Use one phase skill at a time:
 
 1. `web-to-mobile-audit` inspects the target and records evidence.
 2. `mobile-migration-plan` creates `docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md` with route map, checklist, test plan, acceptance criteria, and approval gate.
-3. `expo-react-native-build` runs only after user approval and implements from the checklist.
-4. `mobile-parity-check` verifies design and functional parity against the web source.
-5. `mobile-qa-release` verifies build health, performance, and accessibility before completion.
+3. Route by the approved Migration Fit Verdict. Expo React Native continues to
+   `expo-react-native-build`; Capacitor, PWA/PWABuilder, Stay Web, and
+   Swift/Native receive an explicit implementation handoff because their build
+   phases are not bundled here.
+4. For an Expo build, `mobile-parity-check` verifies design and functional parity
+   against the web source.
+5. `mobile-qa-release` verifies the Expo build before completion.
 
 Do not skip directly to build work. Do not generate or edit app code until a plan exists and the user approved it.
 
@@ -37,7 +41,11 @@ Classify the optional argument:
 - `https://github.com/<owner>/<repo>`: treat as a GitHub repository.
 - Local path: treat as a local source folder.
 
-For live websites, inspect public pages with available browser/fetch tools. This is the UI/UX-only tier: you can plan layout, navigation, and visual direction, but not logic, state, or API behavior. Explain that a faithful code port requires repository or local source access (see `references/output-contracts.md`).
+For live websites, inspect public pages with available browser/fetch tools. This
+is the UI/UX-only tier: you can plan layout, navigation, and visual direction,
+but not logic, state, or API behavior. Explain that a faithful code port
+requires repository or local source access (see
+`../mobile-migration-plan/references/output-contracts.md`).
 
 For GitHub repositories, clone or inspect the repo only when the environment and permissions allow it. If cloning is not possible, ask the user to provide a local checkout.
 
@@ -47,12 +55,16 @@ For local folders or current workspaces, inspect files directly before advising.
 
 Default to Expo React Native.
 
-Use Swift/SwiftUI only when:
+Recommend Swift/SwiftUI planning only when:
 
 - The user explicitly asks for iOS-only.
 - The approved plan requires deep Apple-native behavior.
 - Native performance or Apple polish matters more than cross-platform delivery.
 - The existing team/codebase is Swift-native.
+
+The bundled implementation phase targets Expo React Native. A Swift/Native
+verdict must stop at the approved plan and hand implementation to a native
+workflow or team.
 
 ## Output Rules
 
