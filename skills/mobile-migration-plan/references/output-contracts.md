@@ -74,7 +74,7 @@ Report all three in Completion Status and Screen Inventory.
 
 ## Approval Gate
 
-Used by plan/orchestrator skills:
+For unapproved or changed scope, plan/orchestrator skills must:
 
 1. Write the plan completely.
 2. Summarize done / partial / broken / missing and what the checklist covers.
@@ -82,9 +82,15 @@ Used by plan/orchestrator skills:
 4. Ask the user to approve implementation.
 5. Do not edit app code until the user approves.
 
+Preserve existing approval for unchanged scope when resuming a matching plan.
+
 ## Resume Safety
 
-Used by `expo-react-native-build`: read the Implementation Checklist first, skip `- [x]` items, implement only `- [ ]` items. Never re-implement completed work.
+Match the plan to the target and requested work; check approval and evidence freshness.
+Record the audited revision (when available) and relevant uncommitted changes in Source.
+Read the Implementation Checklist and relevant sections, skip `- [x]` items, and
+implement only `- [ ]` items. Refresh stale findings without resetting completed work
+or unchanged approvals. Never infer approval from checkboxes.
 
 ## Plan-Free Fallback
 
@@ -115,8 +121,10 @@ Reports written to `docs/` open with a **Summary** (app/target, framework, date,
 ## Checklist Format
 
 ```markdown
-- [ ] Action — specific file path — verification command — `[from-code|inferred|assumption]`
-- [x] Completed action — short note on what was done
+- [ ] Action — file path — done condition — command or Test Plan ID — `[from-code|inferred|assumption]`
+- [x] Completed action — result and verification evidence reference
 ```
 
-Items must be executable. No vague items like "improve error handling" with no target file.
+Order executable items by dependencies; name blockers and the next unblocked action.
+Keep evidence and shared commands in one place and reference them. Preserve required
+sections, using `None — reason` for inapplicable areas and `Unknown` for unverified ones.

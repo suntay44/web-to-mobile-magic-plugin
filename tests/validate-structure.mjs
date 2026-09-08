@@ -32,6 +32,7 @@ const requiredFiles = [
   ".codex-plugin/assets/logo.svg",
   ".agents/plugins/marketplace.json",
   ".claude-plugin/plugin.json",
+  ".claude-plugin/marketplace.json",
   ".cursor-plugin/plugin.json",
   "package.json",
   "CHANGELOG.md",
@@ -95,6 +96,15 @@ const requiredFiles = [
 for (const file of requiredFiles) {
   assert(existsSync(join(root, file)), `Missing required file: ${file}`);
 }
+
+const claudeMarketplace = parseJson(".claude-plugin/marketplace.json");
+assert(claudeMarketplace.name === "web-to-mobile-marketplace", "Claude marketplace must match the documented install name");
+assert(claudeMarketplace.owner?.name, "Claude marketplace must identify its owner");
+assert(claudeMarketplace.plugins?.length === 1, "Claude marketplace must expose the bundled plugin");
+const claudeEntry = claudeMarketplace.plugins[0];
+assert(claudeEntry.source === "./", "Claude marketplace must resolve the plugin from this repository root");
+const claudeEntryManifest = JSON.parse(readFileSync(join(root, claudeEntry.source, ".claude-plugin/plugin.json"), "utf8"));
+assert(claudeEntry.name === claudeEntryManifest.name, "Claude marketplace entry must match the packaged plugin name");
 
 const ignoredWalkDirs = new Set([".git", "node_modules", "graphify-out", ".claude"]);
 

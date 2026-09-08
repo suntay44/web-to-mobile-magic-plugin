@@ -2,6 +2,20 @@
 
 All notable changes to WebToMobile are documented here.
 
+## Unreleased
+
+- Add the Claude marketplace catalog required for Git repository installation,
+  plus separate instructions for plugin ZIP uploads and individual skill uploads.
+- Fix first-time manual installs, honor `CLAUDE_CONFIG_DIR`, and report failed or
+  conflicting installs with a nonzero exit status instead of success.
+- Guard ZIP installations nested inside another Git repository from updating
+  that parent repository; distinguish same-version Git updates from no-op updates.
+- Clarify marketplace versus manual updates, project destinations, and symlink lifetime.
+- Resume matching plans with approval and evidence checks instead of restarting every audit.
+- Reduce repeated plan/reference reads and duplicated planning instructions.
+- Make checklists dependency-aware with done conditions, shared verification references,
+  and a clear next action; preserve approval for unchanged scope.
+
 ## 0.3.0
 
 - Package audit scanners and migration references with their consuming skills.

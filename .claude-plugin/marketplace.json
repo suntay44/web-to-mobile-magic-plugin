@@ -1,0 +1,14 @@
+{
+  "name": "web-to-mobile-marketplace",
+  "description": "WebToMobile skills for planning and implementing web-to-mobile migrations.",
+  "owner": {
+    "name": "WebToMobile contributors"
+  },
+  "plugins": [
+    {
+      "name": "web-to-mobile",
+      "source": "./",
+      "description": "Plan-first skill plugin for transforming websites and web apps into Expo React Native mobile apps."
+    }
+  ]
+}

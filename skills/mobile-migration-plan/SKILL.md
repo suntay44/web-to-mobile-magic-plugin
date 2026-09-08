@@ -8,27 +8,19 @@ license: MIT
 
 ## Required Input
 
-Use `web-to-mobile-audit` findings. If none exist, stop and audit first. Use its
-recommended stack unless the evidence changes.
+Use `web-to-mobile-audit` findings and recommended stack unless evidence changes.
+If findings are missing, audit first.
 
 ## Plan File
 
-For repo/local input create:
+Repo/local: `docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md`.
+URL-only: `docs/web-to-mobile/YYYY-MM-DD-ui-ux-spec.md`; layout, navigation,
+and visual direction only (see `references/output-contracts.md`).
 
-```text
-docs/web-to-mobile/YYYY-MM-DD-web-to-mobile-plan.md
-```
-
-For URL-only input create `docs/web-to-mobile/YYYY-MM-DD-ui-ux-spec.md` and
-limit scope to layout, navigation, and visual direction (see
-`references/output-contracts.md`).
-
-Use the current local date. If the audit already created the current run's file
-with `Plan Status: Audit complete — planning pending`, update that file in place
-and preserve its Audit Findings. Never add `-2` solely because the audit created
-the planned filename. Add a numeric suffix only for a distinct migration run
-when the existing file is already planned, approved, or completed. Use
-`references/plan-template.md` as the template when available.
+Use the current local date for a new run. For the current run, update that file in place,
+preserving Audit Findings, completed items, and approval history. An audit file marked
+`Plan Status: Audit complete — planning pending` is the same run. Add a numeric
+suffix only for a distinct run whose filename collides.
 
 ## Required Sections
 
@@ -37,43 +29,32 @@ Migration Fit Verdict, API Needs, Reusable Code, Rewrite-Required Code, Native
 Feature Gaps, Unknowns And Blockers, Implementation Checklist, and Human
 Sign-Off Required.
 
-The Migration Fit Verdict must choose Expo React Native, Capacitor,
-PWA/PWABuilder, Stay Web, or Swift/Native. Do not force native migration when a
-wrapper or PWA is enough.
+The Migration Fit Verdict chooses one path. Do not force native when a wrapper
+or PWA suffices. The verdict controls the next phase:
 
-The verdict controls the next phase:
+- **Expo React Native** → approval, then `expo-react-native-build`.
+- **Capacitor**, **PWA/PWABuilder**, **Stay Web** → approval, then explicit
+  web-stack handoff; no Expo build or mobile parity phase.
+- **Swift/Native** → native-team handoff after approval; no bundled implementation.
 
-- **Expo React Native** → request approval, then hand off to
-  `expo-react-native-build`.
-- **Capacitor**, **PWA/PWABuilder**, or **Stay Web** → end this workflow after
-  approval with an explicit web-stack handoff. Do not invoke the Expo builder or
-  mobile parity phase.
-- **Swift/Native** → end with a native-team implementation handoff. This plugin
-  can plan that path but does not claim a bundled Swift implementation phase.
+Read only the detected framework's section in `references/framework-migration-notes.md`
+and relevant packages in `references/dependency-substitutions.md` for reuse/rewrite
+decisions, equivalents, and difficulty. Reuse findings already in context.
 
-Before the checklist, consult `references/framework-migration-notes.md` and
-`references/dependency-substitutions.md` for the reuse/rewrite split, mobile
-equivalents, and difficulty.
-
-The Route To Mobile Navigation Map must contain Web Route, Mobile Destination,
-Navigator Pattern, Reason, and Confidence. Use tabs for primary areas, stacks
-for detail, auth flows for login/signup, modals for focused flows, and explicit
-deferrals.
+In the Route To Mobile Navigation Map, use tabs for primary areas, stacks for
+details, auth flows for login/signup, modals for focused flows, and explicit deferrals.
 
 The Implementation Checklist needs checkboxes, file paths, source → target
-mappings, verification commands, and a confidence label (`[from-code]`,
-`[inferred]`, `[assumption]`) per item.
+mappings, an observable done condition, verification commands (or Test Plan IDs),
+and a confidence label (`[from-code]`, `[inferred]`, `[assumption]`) per item.
+Order by dependencies; identify blocked items and the next unblocked action.
 
-Avoid vague items. Keep reusable, rewrite-required, mobile-native gaps, and
-unknowns/blockers distinct.
+Keep required sections compact: record evidence once and reference it elsewhere;
+use `None` with a reason for inapplicable sections, and `Unknown` for unverified areas.
+Keep reusable, rewrite-required, mobile-native gaps, and unknowns/blockers distinct.
 
 ## Approval Gate
 
-After writing the plan:
-
-1. Summarize the plan briefly.
-2. Link or point to the plan file.
-3. Ask the user to approve implementation.
-4. Set `Plan Status: Planning complete — approval pending`.
-
-Do not edit app code before approval.
+For unapproved or changed scope, set `Plan Status: Planning complete — approval pending`,
+link the plan, summarize scope/blockers, and request approval. Preserve existing
+approval for unchanged scope. Do not edit app code before approval.

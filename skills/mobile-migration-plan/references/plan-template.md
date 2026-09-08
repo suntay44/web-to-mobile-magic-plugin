@@ -1,11 +1,19 @@
 # WebToMobile Plan: <project or target>
 
+Plan Status: Planning complete — approval pending
+
+Keep required sections brief. Record evidence once; reference it elsewhere.
+Use `None — reason` for inapplicable sections and `Unknown — evidence needed` for unverified areas.
+
 ## Capabilities & Limits
 
 State the input tier (URL → UI/UX only, or repo/local → full scope) and what this
 plan can and cannot deliver as a result. See `output-contracts.md`.
 
 ## Source
+
+Record target, audited revision (when available), and relevant uncommitted changes
+so a later session can check whether findings are still current.
 
 ## Audit Findings
 
@@ -37,7 +45,9 @@ Use a table with: Web Signal, Mobile Need, Suggested Native/Expo API, Status.
 
 ## Implementation Checklist
 
-Each item ends with a confidence label: `[from-code]`, `[inferred]`, or `[assumption]`.
+Order by dependencies; name blockers and the next unblocked item.
+
+`- [ ] Action — source → target paths — done condition — command or Test Plan ID — [from-code|inferred|assumption]`
 
 ## Test Plan
 
@@ -49,4 +59,5 @@ Items only a human can verify on a real device (pixel accuracy, animation feel, 
 
 ## Approval
 
+Record user approval and its scope when given; never infer it from checked items.
 Implementation must not begin until the user approves this plan.

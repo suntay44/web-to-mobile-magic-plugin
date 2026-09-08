@@ -2,6 +2,41 @@
 
 Use these scenarios to verify that `skills/web-to-mobile/SKILL.md` changes agent behavior instead of acting like a generic prompt enhancer.
 
+## Resume An Approved Plan
+
+Prompt: `/mobile-resume .` with an approved matching plan, completed items,
+and unchanged source/config since its recorded evidence.
+
+Expected behavior:
+
+- Reuse the plan, read the next item's relevant sections, and skip completed work.
+- Continue without repeating the audit or asking for unchanged approval.
+- If only verification remains, proceed to QA with fresh command evidence.
+- A newer plan for a different target must not replace the matching plan.
+
+## Resume With Stale Or Unapproved Evidence
+
+Prompt: `/mobile-resume .` with a matching plan whose auth dependency changed
+since audit, or whose checkboxes are populated but approval is absent.
+
+Expected behavior:
+
+- Refresh affected findings and audit if freshness cannot be established.
+- Preserve completed work; surface changed scope for approval before implementation.
+- Never treat checked items as approval or static scanner status as runtime proof.
+
+## Compact Executable Plan
+
+Prompt: plan a small app with several tasks sharing a verification command and
+one task blocked on an unresolved API decision.
+
+Expected behavior:
+
+- Keep required sections; distinguish inapplicable sections from unknowns.
+- Record the shared command once and reference it from tasks with file paths and done conditions.
+- Order tasks by dependencies; identify the blocker and next unblocked action.
+- Read relevant framework/package reference sections without loading unrelated guidance.
+
 ## Scenario 1: Next.js App Conversion
 
 Prompt:

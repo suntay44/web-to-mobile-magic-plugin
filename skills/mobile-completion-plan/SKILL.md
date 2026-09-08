@@ -1,12 +1,10 @@
 ---
 name: mobile-completion-plan
-description: Create the required Markdown completion plan for an unfinished mobile app after audit. Covers completion status by area, screen inventory, implementation checklist, test plan, and build checklist. Includes approval gate.
+description: Plan completion of an audited unfinished mobile app with prioritized tasks, verification, acceptance criteria, and an approval gate.
 license: MIT
 ---
 
 # Mobile Completion Plan
-
-Create the Markdown source of truth for completing an unfinished mobile app.
 
 ## Required Input
 
@@ -14,43 +12,32 @@ Use audit findings from `mobile-app-audit`. If no audit exists, stop and audit f
 
 ## Plan File
 
-Create:
+Use `docs/mobile-resume/YYYY-MM-DD-mobile-completion-plan.md`.
 
-```text
-docs/mobile-resume/YYYY-MM-DD-mobile-completion-plan.md
-```
-
-Use the current local date. If the audit already created the current run's file
-with `Plan Status: Audit complete — planning pending`, update that file in place
-and preserve its Audit Findings. Never add `-2` solely because the audit created
-the planned filename. Add a numeric suffix only for a distinct completion run
-when the existing file is already planned, approved, or completed.
+Use the current local date for a new run. For the current run, update that file in place,
+preserving Audit Findings, completed items, and approval history. An audit file marked
+`Plan Status: Audit complete — planning pending` is the same run. Add a numeric
+suffix only for a distinct run whose filename collides.
 
 ## Required Sections
 
-The plan must include:
-
-- **Source**: repo, framework, SDK version.
-- **Audit Findings**: from the audit phase (may already be written to the file).
-- **Completion Status**: Done / Partial / Broken / Missing for each area (screens, nav, API, auth, state, permissions, assets, tests, build config). Broken items are higher priority than partial.
-- **Screen Inventory and Status**: each screen listed with its file path and status (implemented / partial / broken).
-- **Implementation Checklist**: Markdown checkboxes with specific file paths and verification commands.
+- **Source**: repo, framework, SDK version, audited revision when available, and relevant uncommitted changes.
+- **Audit Findings**: preserve the audit's evidence.
+- **Completion Status**: Done / Partial / Broken / Missing for screens, nav, API, auth, state, permissions, assets, tests, build config; distinguish unverified areas.
+- **Screen Inventory and Status**: file path and implemented / partial / broken per screen; implemented does not imply runtime verification.
+- **Implementation Checklist**: checkboxes with file paths, observable done conditions, and verification commands (or Test Plan IDs).
 - **Test Plan**: what to run and what to add.
-- **Build and Release Checklist**: `app.json`, `eas.json`, signing, env vars.
+- **Build and Release Checklist**: app config, env vars, and signing; include `eas.json` only when EAS is targeted.
 - **Acceptance Criteria**: conditions that define completion.
 - **Approval**: do not edit app code before approval.
 
-The Implementation Checklist must be executable. Example: `- [ ] Complete \`screens/ProfileScreen.tsx\` — replace stub with real data from \`src/api/user.ts\`.`
-
-Avoid vague items like "finish the UI" or "add error handling everywhere". List broken screens before partial screens in the checklist.
+Order executable tasks by dependencies, prioritizing broken screens over partial
+screens. Identify blocked items and the next unblocked action. Record evidence and
+shared verification commands once, then reference them. Use `None` with a reason
+for inapplicable sections and `Unknown` for unverified areas.
 
 ## Approval Gate
 
-After writing the plan:
-
-1. Summarize what is done, partial, broken, and missing.
-2. Link or point to the plan file.
-3. Ask the user to approve implementation.
-4. Set `Plan Status: Planning complete — approval pending`.
-
-Do not edit app code before approval.
+For unapproved or changed scope, set `Plan Status: Planning complete — approval pending`,
+link the plan, summarize status/blockers, and request approval. Preserve existing
+approval for unchanged scope. Do not edit app code before approval.

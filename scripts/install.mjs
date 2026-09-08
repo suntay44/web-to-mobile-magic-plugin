@@ -12,7 +12,7 @@
  *   node scripts/install.mjs --unlink  # remove WebToMobile-owned symlinks
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, realpathSync, statSync, unlinkSync } from "node:fs";
 import { symlink, copyFile, cp, rm, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { homedir, platform } from "node:os";
@@ -28,18 +28,18 @@ const update = process.argv.includes("--update");
 const shouldRefresh = refresh || update;
 const supportedFlags = new Set(["--unlink", "--refresh", "--update"]);
 
-const CLAUDE_DIR = process.env.WEBTOMOBILE_CLAUDE_DIR
-  ? resolve(process.env.WEBTOMOBILE_CLAUDE_DIR)
-  : join(home, ".claude");
+const CLAUDE_DIR = resolve(process.env.WEBTOMOBILE_CLAUDE_DIR ||
+  process.env.CLAUDE_CONFIG_DIR || join(home, ".claude"));
 const COMMANDS_DEST = join(CLAUDE_DIR, "commands");
 const SKILLS_DEST = join(CLAUDE_DIR, "skills");
+let failures = 0;
 
 const ok   = (msg) => console.log(`  ✓  ${msg}`);
 const skip = (msg) => console.log(`  ·  ${msg}`);
 const warn = (msg) => console.log(`  ⚠  ${msg}`);
 
 function ensureDir(dir) {
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  mkdirSync(dir, { recursive: true });
 }
 
 function pathExists(path) {
@@ -72,6 +72,7 @@ function copyOwnershipMarker(dest) {
 
 function isOwnedCopy(dest) {
   if (!pathExists(dest)) return false;
+  if (lstatSync(dest).isSymbolicLink()) return false;
   const marker = copyOwnershipMarker(dest);
   if (!existsSync(marker)) return false;
   try {
@@ -125,7 +126,8 @@ function readPluginVersion() {
 
 function updateRepo() {
   try {
-    runGit(["rev-parse", "--is-inside-work-tree"]);
+    const gitRoot = runGit(["rev-parse", "--show-toplevel"]).trim();
+    if (realpathSync(gitRoot) !== realpathSync(root)) throw new Error("Not the plugin checkout");
   } catch {
     warn("This folder is not a git checkout.");
     warn("Download the latest ZIP from GitHub, replace this folder, then run: node scripts/install.mjs --refresh");
@@ -140,12 +142,16 @@ function updateRepo() {
   }
 
   const versionBefore = readPluginVersion();
+  const revisionBefore = runGit(["rev-parse", "HEAD"]).trim();
   console.log("Updating local repo from GitHub...");
   try {
     execFileSync("git", ["-C", root, "pull", "--ff-only"], { stdio: "inherit" });
     const versionAfter = readPluginVersion();
+    const revisionAfter = runGit(["rev-parse", "HEAD"]).trim();
     if (versionBefore !== versionAfter) {
       ok(`Updated ${versionBefore} -> ${versionAfter}`);
+    } else if (revisionBefore !== revisionAfter) {
+      ok(`Updated ${revisionBefore.slice(0, 8)} -> ${revisionAfter.slice(0, 8)} (${versionAfter})`);
     } else {
       ok(`Already at latest (${versionAfter})`);
     }
@@ -159,8 +165,9 @@ async function linkOrCopy(src, dest, label) {
   if (pathExists(dest)) {
     if (shouldRefresh && isOwnedInstallation(dest)) {
       await removeOwnedInstallation(dest);
-    } else if (shouldRefresh) {
+    } else if (!isOwnedInstallation(dest)) {
       warn(`${label} — exists but is not a WebToMobile-owned install; skipped`);
+      failures += 1;
       return;
     } else {
       skip(`${label} — already exists`);
@@ -179,6 +186,7 @@ async function linkOrCopy(src, dest, label) {
     }
   } catch (err) {
     warn(`${label} — ${err.message}`);
+    failures += 1;
   }
 }
 
@@ -193,6 +201,7 @@ async function removeLink(dest, label) {
     ok(`${label} removed`);
   } catch (err) {
     warn(`${label} — ${err.message}`);
+    failures += 1;
   }
 }
 
@@ -215,14 +224,9 @@ async function main() {
 
   if (update) updateRepo();
 
-  if (!existsSync(CLAUDE_DIR)) {
-    warn(`~/.claude/ not found — is Claude Code installed?`);
-    warn(`Expected: ${CLAUDE_DIR}`);
-    console.log("\nFor project-level install instead, run from your project root:");
-    console.log("  mkdir -p .claude/commands .claude/skills");
-    console.log(`  cp ${join(root, "commands")}/* .claude/commands/`);
-    console.log(`  cp -r ${join(root, "skills")}/. .claude/skills/`);
-    process.exit(0);
+  if (unlink && !existsSync(CLAUDE_DIR)) {
+    console.log(`Nothing installed at ${CLAUDE_DIR}.`);
+    return;
   }
 
   const commandFiles = readdirSync(join(root, "commands")).filter((f) => f.endsWith(".md"));
@@ -231,16 +235,22 @@ async function main() {
   );
 
   if (unlink) {
-    console.log("Removing commands from ~/.claude/commands/");
+    console.log(`Removing commands from ${COMMANDS_DEST}`);
     for (const f of commandFiles) await removeLink(join(COMMANDS_DEST, f), `/${f.replace(".md", "")}`);
-    console.log("\nRemoving skills from ~/.claude/skills/");
+    console.log(`\nRemoving skills from ${SKILLS_DEST}`);
     for (const d of skillDirs) await removeLink(join(SKILLS_DEST, d), d);
-    console.log("\n✓ Uninstall complete.\n");
+    if (failures) {
+      process.exitCode = 1;
+      warn(`Uninstall incomplete: ${failures} operation(s) failed.`);
+    } else {
+      console.log("\n✓ Uninstall complete. User-owned files were preserved.\n");
+    }
     return;
   }
 
-  console.log("Installing commands → ~/.claude/commands/");
+  console.log(`Installing commands → ${COMMANDS_DEST}`);
   ensureDir(COMMANDS_DEST);
+  ensureDir(SKILLS_DEST);
   for (const f of commandFiles) {
     await linkOrCopy(
       join(root, "commands", f),
@@ -249,12 +259,16 @@ async function main() {
     );
   }
 
-  console.log("\nInstalling skills → ~/.claude/skills/");
-  ensureDir(SKILLS_DEST);
+  console.log(`\nInstalling skills → ${SKILLS_DEST}`);
   for (const d of skillDirs) {
     await linkOrCopy(join(root, "skills", d), join(SKILLS_DEST, d), d);
   }
 
+  if (failures) {
+    process.exitCode = 1;
+    warn(`Install incomplete: ${failures} item(s) failed or conflicted. Resolve the warnings, then rerun the installer.`);
+    return;
+  }
   console.log("\n✅ Done. Restart Claude Code to pick up the new commands.\n");
   console.log("Available slash commands:");
   for (const f of commandFiles) console.log(`  /${f.replace(".md", "")}`);

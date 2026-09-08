@@ -96,13 +96,23 @@ Going from a website to a mobile app usually means a lot of manual back-and-fort
 
 ## Updating
 
-Most users should update with one command from the cloned repo:
+**Claude marketplace installs:** run these in a terminal, then restart Claude Code:
+
+```bash
+claude plugin marketplace update web-to-mobile-marketplace
+claude plugin update web-to-mobile@web-to-mobile-marketplace
+```
+
+For the Claude plugin UI, use its marketplace/plugin update controls.
+
+**Manual installs:** run from your retained WebToMobile checkout:
 
 ```bash
 node scripts/install.mjs --update
 ```
 
-`--update` pulls the latest WebToMobile from GitHub, then refreshes the installed Claude commands and skills.
+`--update` pulls WebToMobile from GitHub and refreshes manually installed Claude
+commands and skills. It does not update marketplace installations.
 
 Use `--refresh` only when you already have the version you want locally:
 
@@ -117,13 +127,20 @@ Common cases:
 | You want the latest release from GitHub | `node scripts/install.mjs --update` |
 | You edited the plugin locally and want Claude to use your edits | `node scripts/install.mjs --refresh` |
 | You already ran `git pull` yourself | `node scripts/install.mjs --refresh` |
-| You installed from a ZIP download | Download the latest ZIP, replace the folder, then run `node scripts/install.mjs --refresh` |
+| You manually installed from a source ZIP | Extract the latest source ZIP into the same retained folder, then run `node scripts/install.mjs --refresh` |
 
 `--update` refuses to run if you have local uncommitted changes. It will ask you to commit/stash or update manually first.
+
+For a project-level manual install, use the same `WEBTOMOBILE_CLAUDE_DIR` destination
+for refresh and uninstall. Keep the checkout at the same path on macOS/Linux:
+the installed symlinks depend on it. Run `--unlink` before moving it, then reinstall.
 
 ---
 
 ## Commands
+
+These are the short names for manual installs. Marketplace/plugin installs use
+the `web-to-mobile:` prefix, for example `/web-to-mobile:mobile-scan`.
 
 | Command | Scenario | What it does |
 |---------|----------|--------------|
@@ -178,25 +195,58 @@ The Markdown plan acts as external memory between phases, so the agent does not 
 
 ## Install
 
-**Prerequisites:** [Node.js](https://nodejs.org) v22 or v24 LTS and at least one
-of: Claude Code (CLI or Desktop), Cursor, or Codex.
+Choose one installation method below. The GitHub marketplace method does not
+require a manual clone or the Node installer. Running the bundled audit scripts
+and the manual installer requires [Node.js](https://nodejs.org) v22 or v24 LTS;
+Git-based installation also requires Git.
+
+### Claude Code — CLI and Desktop App
+
+**Plugin marketplace install** (run in the Claude Code terminal CLI):
+
+```text
+/plugin marketplace add suntay44/web-to-mobile-magic-plugin
+/plugin install web-to-mobile@web-to-mobile-marketplace
+```
+
+Or run the equivalent commands in your normal terminal:
+
+```bash
+claude plugin marketplace add https://github.com/suntay44/web-to-mobile-magic-plugin
+claude plugin install web-to-mobile@web-to-mobile-marketplace
+```
+
+This installs for your user across projects. For only your current project,
+run the install command from that project's folder with `--scope local`.
+If the desktop Code surface does not offer `/plugin`, use its plugin browser
+or the terminal commands above. Adding a marketplace alone does not install the plugin.
+
+Restart Claude Code after installation. Plugin commands are namespaced, for
+example `/web-to-mobile:web-to-mobile` and `/web-to-mobile:mobile-resume`.
+The repository provides `.claude-plugin/marketplace.json` for this install path.
+See [Claude's marketplace documentation](https://code.claude.com/docs/en/plugin-marketplaces).
+
+Choose the marketplace install above or the manual install below to avoid
+duplicate commands. The manual install keeps the short `/web-to-mobile` names.
+
+**Manual global install** (short commands available in every project):
 
 ```bash
 git clone https://github.com/suntay44/web-to-mobile-magic-plugin
 cd web-to-mobile-magic-plugin
-```
-
-### Claude Code — CLI and Desktop App
-
-**Global install** (commands available in every project):
-
-```bash
 node scripts/install.mjs
 ```
 
+For GitHub **Download ZIP**, extract the source archive and open a terminal in
+the extracted folder containing `scripts/install.mjs`, then run the last command.
+Keep this folder after installation. `npm install` is not needed for the installer.
+
 This symlinks commands and skills on macOS/Linux. On Windows it creates
 ownership-marked copies so refresh and uninstall can distinguish plugin files
-from user-owned files. Restart Claude Code after running.
+from user-owned files. It creates missing configuration directories and respects
+`CLAUDE_CONFIG_DIR` when configured; otherwise it uses `~/.claude`.
+Existing user-owned files are preserved and reported as conflicts with a nonzero
+exit status. Restart Claude Code, then open your app project to use the commands.
 
 Useful installer commands:
 
@@ -205,17 +255,52 @@ Useful installer commands:
 | `node scripts/install.mjs` | First install |
 | `node scripts/install.mjs --update` | Pull latest release and refresh installed links |
 | `node scripts/install.mjs --refresh` | Refresh local edits or a manual `git pull` |
-| `node scripts/install.mjs --unlink` | Remove WebToMobile-owned links |
+| `node scripts/install.mjs --unlink` | Remove WebToMobile-owned links or copies |
 
-**Project-level install** (commands available in this project only):
+**Manual project-level install** (macOS/Linux): from the WebToMobile checkout,
+set the destination to your app project's `.claude` directory. Replace the path below.
 
 ```bash
-mkdir -p .claude/commands .claude/skills
-cp commands/* .claude/commands/
-cp -r skills/. .claude/skills/
+WEBTOMOBILE_CLAUDE_DIR="/absolute/path/to/your-app/.claude" node scripts/install.mjs
 ```
 
-After install, type any command from the [Commands](#commands) table in Claude Code. If the Skill tool is unavailable, each command can read its matching `SKILL.md` directly from `skills/` or `~/.claude/skills/`.
+This override takes precedence over `CLAUDE_CONFIG_DIR`. It uses the same guarded
+installer instead of overwriting existing project files with `cp`. On Windows,
+the marketplace install with `--scope local` above provides a project-local alternative.
+
+After a manual install, open Claude Code in your app project and use a command
+from the [Commands](#commands) table. Installed skills include their audit scripts
+and references; the app project does not need a copy of the WebToMobile repository.
+
+### Claude plugin uploads and ZIP downloads
+
+In Claude's **Customize → Plugins**, use **Add marketplace** with this repository's
+GitHub URL, then install WebToMobile. See [Claude's plugin installation guide](https://claude.com/docs/cowork/guide/plugins).
+
+For a plugin file upload, clone or download/extract the source as described in
+the manual install section, then package from that repository root
+(macOS/Linux with `zip` installed; use a new output filename if one already exists):
+
+```bash
+zip -r ../web-to-mobile.zip .claude-plugin/plugin.json commands skills LICENSE -x '*.DS_Store'
+```
+
+Upload that ZIP through **Plugins**. It contains `.claude-plugin/plugin.json`,
+`commands/`, and `skills/` at the archive root. GitHub's **Download ZIP** is a
+source archive with an extra folder; extract it before packaging or running the
+manual installer. See [Anthropic's plugin packaging example](https://github.com/anthropics/knowledge-work-plugins/blob/main/cowork-plugin-management/skills/create-cowork-plugin/SKILL.md).
+
+**Customize → Skills → Upload a skill** expects a single skill folder, not this
+multi-skill plugin. Install the complete plugin so sibling skills and references
+remain available. See [Claude's skill upload format](https://support.claude.com/en/articles/12512198-how-to-create-custom-skills).
+
+The local Node installer configures Claude Code; it does not install into Claude's
+chat or Cowork plugin UI. App implementation still requires a coding environment
+with source access and the required build tools.
+
+If installation fails, include the exact error, Claude surface (Code, Cowork, or
+chat), and whether you used Add marketplace, Upload plugin, Upload a skill, or
+the terminal installer when reporting it.
 
 ### Cursor
 
@@ -257,6 +342,23 @@ available in the IDE extension. Exact skill shortcuts depend on the surface.
 ---
 
 ## Troubleshooting
+
+### Claude cannot add the GitHub marketplace
+
+Use the repository URL in **Add marketplace**, not Upload a skill, and install
+the plugin after the catalog is added. `Marketplace file not found` means the
+downloaded revision lacks `.claude-plugin/marketplace.json`; older WebToMobile
+revisions did not include it. Git/authentication/network errors are different:
+include the exact error and check whether `git ls-remote https://github.com/suntay44/web-to-mobile-magic-plugin`
+succeeds in your terminal. See [Claude's marketplace troubleshooting](https://code.claude.com/docs/en/plugin-marketplaces#troubleshooting).
+
+### Claude commands do not appear
+
+For marketplace installs, use `/web-to-mobile:web-to-mobile`, not `/web-to-mobile`.
+Check `claude plugin list` and restart Claude Code after installation. For manual
+installs, check the destination printed by the installer and any conflict/error
+messages. Keep the source folder in place on macOS/Linux; deleting it breaks
+the symlinks. The manual installer does not configure the Cowork/chat plugin UI.
 
 ### Codex marketplace does not appear
 
@@ -311,7 +413,9 @@ web-to-mobile/
 │   ├── pressure-scenarios.md
 │   └── validate-structure.mjs
 ├── roadmap/                  # Maintainer release checklists and implementation briefs
-├── .claude-plugin/plugin.json
+├── .claude-plugin/
+│   ├── plugin.json
+│   └── marketplace.json
 ├── .cursor-plugin/plugin.json
 ├── .codex-plugin/plugin.json
 └── LICENSE
